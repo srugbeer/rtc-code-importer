@@ -22,10 +22,14 @@ import com.ibm.team.filesystem.common.IFileItem;
 import com.ibm.team.links.common.ILink;
 import com.ibm.team.repository.client.IItemManager;
 import com.ibm.team.repository.client.ITeamRepository;
+import com.ibm.team.repository.common.IContributorHandle;
 import com.ibm.team.repository.common.TeamRepositoryException;
 import com.ibm.team.scm.client.IConfiguration;
 import com.ibm.team.scm.client.IWorkspaceConnection;
+import com.ibm.team.scm.client.IWorkspaceConnection.ISaveOp;
 import com.ibm.team.scm.client.content.util.VersionedContentManagerByteArrayInputStreamPovider;
+import com.ibm.team.scm.client.interop.IWorkspaceConnectionInteropAdapter;
+import com.ibm.team.scm.common.IChangeSet;
 import com.ibm.team.scm.common.IChangeSetHandle;
 import com.ibm.team.scm.common.IComponent;
 import com.ibm.team.scm.common.IComponentHandle;
@@ -49,30 +53,30 @@ public class ScmClient {
 
 	public IFileItem addFileToSourceControl(ITeamRepository teamRepository, File file, String fileName,
 			IWorkspaceConnection workspaceConnection, IComponentHandle componentHandle, IConfiguration config,
-			String comment, Date date, IWorkItem workItem, IProgressMonitor monitor) 
+			String comment, Date creationDate, IContributorHandle creator, IWorkItem workItem, IProgressMonitor monitor) 
 					throws TeamRepositoryException, IOException {
 		
 		IFileItem sourceFileItem = null;
 		
-		//Create Change Set
-		IChangeSetHandle changeSetHandle = workspaceConnection.createChangeSet(componentHandle, 
-				comment, true, monitor);
-		
-		//Link Change Set to Work Item
-		System.out.println("Linking Change Set to Work Item: " + workItem.getHTMLSummary().getPlainText());
-		this.linkChangeSetToWorkItem(workspaceConnection, changeSetHandle, workItem, monitor);
-		
+		//Get Workspace Connection Interop Adaptor
+		IWorkspaceConnectionInteropAdapter adaptor = ScmUtils.getInteropAdaptor(workspaceConnection);
+
+		//Get File Content Manager
 		IFileContentManager contentManager = FileSystemCore.getContentManager(teamRepository);
 		
+		//Get Component
 		IComponent component = (IComponent) teamRepository.itemManager().
 				fetchCompleteItem(componentHandle, IItemManager.REFRESH, monitor);
 		
+		//Get Parent Folder
 		IFolderHandle parentFolderHandle = component.getRootFolder();
 		
+		//Check for existing Source File
 		sourceFileItem = ScmUtils.getFile(fileName, parentFolderHandle, config, monitor);
 		
 		if (sourceFileItem == null) {
-			sourceFileItem = ScmUtils.createFileItem(fileName, parentFolderHandle, date);
+			//If the source file does not already exist, create a new item
+			sourceFileItem = ScmUtils.createFileItem(fileName, parentFolderHandle, creationDate);
 		}
 		
 		FileInputStream fileInputStream = new FileInputStream(file);
@@ -89,11 +93,17 @@ public class ScmClient {
 			IFileItem sourceFileItemWorkingCopy = (IFileItem) sourceFileItem
 					.getWorkingCopy();
 			sourceFileItemWorkingCopy.setContent(sourceFileContent);
-			sourceFileItemWorkingCopy.setFileTimestamp(date);
-			workspaceConnection.commit(changeSetHandle, Collections
-					.singletonList(workspaceConnection.configurationOpFactory()
-							.save(sourceFileItemWorkingCopy)), monitor);
-			//return sourceFileItemWorkingCopy;
+			sourceFileItemWorkingCopy.setFileTimestamp(creationDate);
+
+			List<ISaveOp> configOps = Collections.singletonList(workspaceConnection.configurationOpFactory().
+					save(sourceFileItemWorkingCopy));
+			IChangeSet changeSet = adaptor.importChangeSet(componentHandle, comment, 
+					configOps, creationDate.getTime(), creator, monitor).getChangeSet();
+			
+			//Link Change Set to Work Item
+			System.out.println("Linking Change Set to Work Item: " + workItem.getHTMLSummary().getPlainText());
+			this.linkChangeSetToWorkItem(workspaceConnection, changeSet, workItem, monitor);
+
 		} finally {
 			byteArrayOutputStream.close();
 		}

@@ -23,10 +23,12 @@ import za.co.indigocube.rtc.code.importer.source.FolderReader;
 import za.co.indigocube.rtc.code.importer.source.model.SourceFile;
 import za.co.indigocube.rtc.code.importer.source.model.SourceFileVersion;
 import za.co.indigocube.rtc.code.importer.workitem.WorkItemClient;
+import za.co.indigocube.rtc.code.importer.workitem.WorkItemUtils;
 
 import com.ibm.team.filesystem.common.IFileItem;
+import com.ibm.team.process.common.IDevelopmentLine;
+import com.ibm.team.process.common.IIterationHandle;
 import com.ibm.team.process.common.IProjectArea;
-import com.ibm.team.repository.client.IContributorManager;
 import com.ibm.team.repository.client.ITeamRepository;
 import com.ibm.team.repository.client.TeamPlatform;
 import com.ibm.team.repository.common.IContributor;
@@ -35,6 +37,8 @@ import com.ibm.team.scm.client.IConfiguration;
 import com.ibm.team.scm.client.IWorkspaceConnection;
 import com.ibm.team.scm.common.IComponentHandle;
 import com.ibm.team.scm.common.IVersionable;
+import com.ibm.team.workitem.common.IWorkItemCommon;
+import com.ibm.team.workitem.common.model.ICategory;
 import com.ibm.team.workitem.common.model.IWorkItem;
 
 
@@ -241,7 +245,7 @@ public class RTCCodeImporter {
 	    return repository;
 	}
 
-	public IFileItem importSourceFileToRTC(SourceFile sourceFile, ITeamRepository teamRepository,
+	private IFileItem importSourceFileToRTC(SourceFile sourceFile, ITeamRepository teamRepository,
 			String sourceWorkspaceName, String targetStreamName, String componentName, IProgressMonitor monitor) 
 					throws TeamRepositoryException, IOException, ParseException {
 		
@@ -263,10 +267,33 @@ public class RTCCodeImporter {
         
         //Get Configuration
         IConfiguration config = ScmUtils.getConfiguration(sourceWorkspaceConnection, componentHandle);
+        
+        //Get Work Item Common
+        IWorkItemCommon wiCommon = WorkItemUtils.getWorkItemCommon(teamRepository);
+        
+        IWorkItem workItem = null;
 	    
 	    //Find Work Item
-	    IWorkItem workItem = wiClient.findWorkItem(teamRepository, this.getWorkItemId(), monitor);
-	    //System.out.println("Work Item Summary: " + workItem.getHTMLSummary().toString());
+        if (this.getWorkItemId() != -1) {
+        	//Use Existing Work Item
+        	workItem = wiClient.findWorkItem(teamRepository, this.getWorkItemId(), monitor);
+        }
+        else {
+        	//Create new Work Item
+        	IProjectArea projectArea = ScmUtils.getProjectArea(teamRepository, this.getProjectAreaName());
+        	String workItemTypeId = "task";
+        	String devLineName = "Main Development";
+        	String summary = "Import " + sourceFile.getName();
+        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
+        	Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+        	IContributor loggedinUser = teamRepository.loggedInContributor();
+        	
+        	IDevelopmentLine devLine = WorkItemUtils.findDevelopmentLine(teamRepository, projectArea, devLineName, monitor);
+    		IIterationHandle currentIteration = devLine.getCurrentIteration();
+        	
+        	workItem = wiClient.createWorkItem(teamRepository, projectArea, workItemTypeId, summary, rootCategory, 
+        			currentTime, loggedinUser, loggedinUser, currentIteration, monitor);
+        }
         
         //Get Source File Version History
         Map<Integer, SourceFileVersion> history = sourceFile.getHistory();
@@ -286,10 +313,12 @@ public class RTCCodeImporter {
 	    	System.out.println(comment);
 	    	Date date = dateFormat.parse(creationDate);
 	    	System.out.println("Creation Date: " + date);
+	   
+            IContributor creator = this.findContributor(teamRepository, createdBy, monitor);
 	    	
 	    	//Commit File Version to Repository
 	    	fileItem = scmClient.addFileToSourceControl(teamRepository, file, fileName, sourceWorkspaceConnection, 
-	    			componentHandle, config, comment, date, workItem, monitor);
+	    			componentHandle, config, comment, date, creator, workItem, monitor);
 	    	
 	    	//Deliver change to Target Stream
 	    	System.out.println("Delivering change set to Stream");
@@ -311,9 +340,10 @@ public class RTCCodeImporter {
 		return fileItem;		
 	}
 	
-	public ArrayList<IFileItem> importSourceFilesToRTC(ArrayList<SourceFile> sourceFiles, 
+	private ArrayList<IFileItem> importSourceFilesToRTC(ArrayList<SourceFile> sourceFiles, 
 			ITeamRepository teamRepository, String sourceWorkspaceName, String targetStreamName, 
-			String componentName, IProgressMonitor monitor) throws TeamRepositoryException, IOException, ParseException {
+			String componentName, IProgressMonitor monitor) 
+					throws TeamRepositoryException, IOException, ParseException {
 		
 		ArrayList<IFileItem> fileItems = new ArrayList<IFileItem>();
 		
@@ -356,29 +386,12 @@ public class RTCCodeImporter {
             IProjectArea projectArea = ScmUtils.getProjectArea(teamRepository, this.getProjectAreaName());
             System.out.println("Project Area: " + projectArea.getName());
 
-            //importSourceFilesToRTC(sourceFileList, teamRepository, 
-            //		this.getSourceWorkspaceName(), this.getTargetStreamName(), this.getComponentName(), monitor);
-            
-            
-    	    //Create Work Item
-            String workItemTypeId = "task";
-            String summary = "Created from JPJC";
-            String creationDateString = "20170930-1430";
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-hhmm");
-            Date creationDate = dateFormat.parse(creationDateString);
-            
-            IContributorManager contributorManager = teamRepository.contributorManager();
-            IContributor deb = contributorManager.fetchContributorByUserId("deb", monitor);
-
-    	    WorkItemClient wiClient = new WorkItemClient();
-    	    IWorkItem workItem = wiClient.createWorkItem(teamRepository, projectArea, workItemTypeId, summary, null, monitor);
-            workItem.setCreationDate(new Timestamp(creationDate.getTime()));
-            workItem.setCreator(deb);
-            
+            importSourceFilesToRTC(sourceFileList, teamRepository, 
+            		this.getSourceWorkspaceName(), this.getTargetStreamName(), this.getComponentName(), monitor);            
         } catch (TeamRepositoryException e) {
             System.out.println("RTC Error: " + e.getMessage());
-        //} catch (IOException e) {
-		//	e.printStackTrace();
+        } catch (IOException e) {
+			e.printStackTrace();
 		} catch (ParseException e) {
 			e.printStackTrace();
 		} finally {
@@ -386,6 +399,11 @@ public class RTCCodeImporter {
         }
 	}
 	
+	private IContributor findContributor(ITeamRepository teamRepository, String contributorName, 
+			IProgressMonitor monitor) throws TeamRepositoryException {
+        return teamRepository.contributorManager().fetchContributorByUserId(contributorName, monitor);
+        
+	}
     
 	/**
 	 * @param args
@@ -399,7 +417,6 @@ public class RTCCodeImporter {
 	    
 	    //Project Area Settings
 	    final String PROJECT_AREA = "Mainframe Code PoC";
-	    //private static String PROJECT_AREA = "CARA Post Deliver Test";
 	    
 	    //SCM Settings
 	    final String STREAM_NAME = "Mainframe Code Dev Stream";
@@ -409,7 +426,7 @@ public class RTCCodeImporter {
 	    //Source Settings
 	    final String SOURCE_FOLDER = "C:/RTC603Dev/MainframeCodeMigrationSample";
 	    
-	    final int WORKITEM_ID = 13;
+	    final int WORKITEM_ID = -1;
 	    
 	    RTCCodeImporter rtcCodeImporter = new RTCCodeImporter(REPOSITORY_ADDRESS, USERNAME, PASSWORD, 
 	    		PROJECT_AREA, WORKSPACE_NAME, STREAM_NAME, COMPONENT_NAME, SOURCE_FOLDER, WORKITEM_ID);

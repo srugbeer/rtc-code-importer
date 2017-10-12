@@ -24,6 +24,7 @@ import com.ibm.team.scm.client.IConfiguration;
 import com.ibm.team.scm.client.IWorkspaceConnection;
 import com.ibm.team.scm.client.IWorkspaceManager;
 import com.ibm.team.scm.client.SCMPlatform;
+import com.ibm.team.scm.client.interop.IWorkspaceConnectionInteropAdapter;
 import com.ibm.team.scm.common.ComponentNotInWorkspaceException;
 import com.ibm.team.scm.common.IComponentHandle;
 import com.ibm.team.scm.common.IFolderHandle;
@@ -50,17 +51,15 @@ public class ScmUtils {
 	
 	public static IProjectArea getProjectArea(ITeamRepository teamRepository, 
 			String projectAreaName) throws TeamRepositoryException {
+		
 	    IProjectArea projectArea = null;
 		
-		//Get Project Area Handle
 	    IProcessItemService processItemService = (IProcessItemService) teamRepository.
 	    		getClientLibrary(IProcessItemService.class);
 	    
 	    URI uri = URI.create(projectAreaName.replaceAll(" ", "%20"));
 		projectArea = (IProjectArea) processItemService.findProcessArea(uri, null, null);
-		//System.out.println(projectArea == null ? "Project Area not found!" : "Found Project Area \"" 
-		//										+ projectArea.getName() + "\"");
-		
+	
 		return projectArea;
 	}
 	
@@ -92,6 +91,11 @@ public class ScmUtils {
         workspaceConnection = workspaceManager.getWorkspaceConnection(workspaceHandle, monitor);
         
         return workspaceConnection;
+	}
+	
+	public static IWorkspaceConnectionInteropAdapter getInteropAdaptor(IWorkspaceConnection workspaceConnection) {
+		return (IWorkspaceConnectionInteropAdapter) workspaceConnection.
+				getAdapter(IWorkspaceConnectionInteropAdapter.class);
 	}
 	
 	public static IComponentHandle getComponent(ITeamRepository teamRepository, String componentName, 

@@ -3,12 +3,16 @@
  */
 package za.co.indigocube.rtc.code.importer.workitem;
 
+import java.sql.Timestamp;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import za.co.indigocube.rtc.code.importer.workitem.WorkItemUtils.WorkItemInitialization;
 
+import com.ibm.team.process.common.IIterationHandle;
 import com.ibm.team.process.common.IProjectArea;
 import com.ibm.team.repository.client.ITeamRepository;
+import com.ibm.team.repository.common.IContributorHandle;
 import com.ibm.team.repository.common.TeamRepositoryException;
 import com.ibm.team.workitem.client.IAuditableClient;
 import com.ibm.team.workitem.common.IWorkItemCommon;
@@ -39,8 +43,9 @@ public class WorkItemClient {
 		return workItem;
 	}
 	
-	public IWorkItem createWorkItem(ITeamRepository teamRepository, IProjectArea projectArea, 
-			String workItemTypeId, String summary, ICategory category, IProgressMonitor monitor) 
+	public IWorkItem createWorkItem(ITeamRepository teamRepository, IProjectArea projectArea, String workItemTypeId, 
+			String summary, ICategory category, Timestamp creationDate, IContributorHandle creator, 
+			IContributorHandle owner, IIterationHandle iteration, IProgressMonitor monitor) 
 					throws TeamRepositoryException {
 		
 		IWorkItem workItem = null;
@@ -50,12 +55,12 @@ public class WorkItemClient {
 			category = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
 		}
 		
-		IWorkItemType workItemType = wiCommon.findWorkItemType(projectArea, workItemTypeId, monitor);
+		IWorkItemType workItemType = wiCommon.findWorkItemType(projectArea, workItemTypeId, monitor);		
 		
-		WorkItemInitialization workItemInit = new WorkItemInitialization(summary, category);
+		WorkItemInitialization workItemInit = new WorkItemInitialization(summary, category, creationDate, 
+				creator, owner, iteration);
 		IWorkItemHandle handle = workItemInit.run(workItemType, null);
 		workItem = auditableClient.resolveAuditable(handle, IWorkItem.FULL_PROFILE, null);
-		System.out.println("Created work item " + workItem.getId() + ".");
 		
 		return workItem;
 	}
