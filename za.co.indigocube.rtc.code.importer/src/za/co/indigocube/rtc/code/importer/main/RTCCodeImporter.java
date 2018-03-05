@@ -4,6 +4,8 @@
 package za.co.indigocube.rtc.code.importer.main;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -11,6 +13,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
+import java.util.Properties;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -32,6 +35,7 @@ import com.ibm.team.process.common.IProjectArea;
 import com.ibm.team.repository.client.ITeamRepository;
 import com.ibm.team.repository.client.TeamPlatform;
 import com.ibm.team.repository.common.IContributor;
+import com.ibm.team.repository.common.ItemNotFoundException;
 import com.ibm.team.repository.common.TeamRepositoryException;
 import com.ibm.team.scm.client.IConfiguration;
 import com.ibm.team.scm.client.IWorkspaceConnection;
@@ -305,7 +309,7 @@ public class RTCCodeImporter {
 	    	String createdBy = sourceFileVersion.getCreatedBy();
 	    	String creationDate = sourceFileVersion.getCreationDate();
 	    	
-	    	SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-hhmm");
+	    	SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMddhhmmss");
 	    	
 	    	int version = i;
 	    	String comment = "Checking-in File: " + fileName + " version: " + version 
@@ -313,9 +317,19 @@ public class RTCCodeImporter {
 	    	System.out.println(comment);
 	    	Date date = dateFormat.parse(creationDate);
 	    	System.out.println("Creation Date: " + date);
-	   
-            IContributor creator = this.findContributor(teamRepository, createdBy, monitor);
 	    	
+	    	IContributor creator = null;
+            try {
+            	creator = this.findContributor(teamRepository, createdBy, monitor);
+            }
+            catch (TeamRepositoryException e) {
+            	//User Not Found in Repo
+            	if (e instanceof ItemNotFoundException) {
+            		creator = this.findContributor(teamRepository, "TestJazzAdmin1", monitor);
+            		System.out.println(e.getMessage());
+            		System.out.println("Using default Admin User.");
+            	}
+            }
 	    	//Commit File Version to Repository
 	    	fileItem = scmClient.addFileToSourceControl(teamRepository, file, fileName, sourceWorkspaceConnection, 
 	    			componentHandle, config, comment, date, creator, workItem, monitor);
@@ -410,23 +424,49 @@ public class RTCCodeImporter {
 	 */
     public static void main(String[] args) {
     	
+    	Properties importProps = new Properties();
+    	try {
+			importProps.load(new FileInputStream("C:/git_projects/rtc-code-importer/za.co.indigocube.rtc.code.importer/src/za/co/indigocube/rtc/code/importer/resources/import.properties"));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
 		//Repo Settings
-	    final String REPOSITORY_ADDRESS = "https://localhost:7443/jazz";
-	    final String USERNAME = "TestJazzAdmin1";
-	    final String PASSWORD = "TestJazzAdmin1";
+    	final String REPOSITORY_ADDRESS = importProps.getProperty("rtc.repo.url", "https://localhost:9443/ccm");
+    	final String USERNAME = importProps.getProperty("rtc.repo.username", "ADMIN");
+    	final String PASSWORD = importProps.getProperty("rtc.repo.password", "ADMIN");
+    	
+	    //final String REPOSITORY_ADDRESS = "https://localhost:7443/jazz";
+	    //final String USERNAME = "TestJazzAdmin1";
+	    //final String PASSWORD = "TestJazzAdmin1";
 	    
 	    //Project Area Settings
-	    final String PROJECT_AREA = "Mainframe Code PoC";
+	    final String PROJECT_AREA = importProps.getProperty("rtc.project.name", "JKE Banking");
+    	
+    	//final String PROJECT_AREA = "Mainframe Code PoC";
 	    
 	    //SCM Settings
-	    final String STREAM_NAME = "Mainframe Code Dev Stream";
-	    final String COMPONENT_NAME = "COBOL";
-	    final String WORKSPACE_NAME = "admin Mainframe Code Dev Stream Workspace";
+	    final String STREAM_NAME = importProps.getProperty("rtc.stream.name", "JKE Banking Dev Stream");
+	    final String COMPONENT_NAME = importProps.getProperty("rtc.component.name", "COBOL");
+	    final String WORKSPACE_NAME = importProps.getProperty("rtc.workspace.name", "admin JKE Banking Dev Stream");
+	    	    
+	    //final String STREAM_NAME = "Mainframe Code Dev Stream";
+	    //final String COMPONENT_NAME = "COBOL";
+	    //final String WORKSPACE_NAME = "admin Mainframe Code Dev Stream Workspace";
 	    
 	    //Source Settings
-	    final String SOURCE_FOLDER = "C:/RTC603Dev/MainframeCodeMigrationSample";
+	    final String SOURCE_FOLDER = importProps.getProperty("source.folder", "C:/Migration");
 	    
-	    final int WORKITEM_ID = -1;
+	    //final String SOURCE_FOLDER = "C:/RTC603Dev/MainframeCodeMigrationSample";
+	    
+	    //RTC Work Item
+	    final int WORKITEM_ID = Integer.parseInt(importProps.getProperty("rtc.workitem.id", "-1"));
+	    
+	    //final int WORKITEM_ID = -1;
 	    
 	    RTCCodeImporter rtcCodeImporter = new RTCCodeImporter(REPOSITORY_ADDRESS, USERNAME, PASSWORD, 
 	    		PROJECT_AREA, WORKSPACE_NAME, STREAM_NAME, COMPONENT_NAME, SOURCE_FOLDER, WORKITEM_ID);
