@@ -3,24 +3,25 @@
  */
 package za.co.indigocube.rtc.code.importer.source.model;
 
+import java.util.Date;
+
 /**
  * @author Sudheer
  *
  */
-public class SourceFileVersion {
+public class SourceFileVersion implements Comparable<SourceFileVersion> {
 	//private int fVersion;
 	private String fVersionFileName;
 	private String fCreatedBy;
-	private String fCreationDate;
+	private Date fCreationDate;
+	
 	/**
 	 * @param createdBy
 	 * @param creationDate
 	 */
-	public SourceFileVersion(String createdBy, String creationDate) {
+	public SourceFileVersion(String createdBy, Date creationDate) {
 		//this.setVersion(version);
-		this.setCreatedBy(createdBy);
-		this.setCreationDate(creationDate);
-		this.setVersionFileName("");
+		new SourceFileVersion("", createdBy, creationDate);
 	}
 	
 	/**
@@ -28,7 +29,7 @@ public class SourceFileVersion {
 	 * @param createdBy
 	 * @param creationDate
 	 */
-	public SourceFileVersion(String versionFileName, String createdBy, String creationDate) {
+	public SourceFileVersion(String versionFileName, String createdBy, Date creationDate) {
 		//this.setVersion(version);
 		this.setVersionFileName(versionFileName);
 		this.setCreatedBy(createdBy);
@@ -76,13 +77,13 @@ public class SourceFileVersion {
 	/**
 	 * @return the creationDate
 	 */
-	public String getCreationDate() {
+	public Date getCreationDate() {
 		return fCreationDate;
 	}
 	/**
 	 * @param creationDate the creationDate to set
 	 */
-	public void setCreationDate(String creationDate) {
+	public void setCreationDate(Date creationDate) {
 		this.fCreationDate = creationDate;
 	}
 	
@@ -90,6 +91,12 @@ public class SourceFileVersion {
 	public String toString() {
 		return "Version File: " + this.getVersionFileName() + ", Creation Date: " + 
 					this.getCreationDate() + ", Created By: " + this.getCreatedBy();
+	}
+
+	@Override
+	public int compareTo(SourceFileVersion o) {
+		// TODO Auto-generated method stub
+		return this.fCreationDate.compareTo(o.fCreationDate);
 	}
 
 }

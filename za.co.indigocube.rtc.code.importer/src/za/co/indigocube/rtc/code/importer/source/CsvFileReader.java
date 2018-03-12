@@ -8,8 +8,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeSet;
 
 import za.co.indigocube.rtc.code.importer.source.model.SourceFileVersion;
 
@@ -59,9 +63,10 @@ public class CsvFileReader {
 		return metadataMap;
 	}
 	
-	public static Map<Integer, SourceFileVersion> readAuditCsvFile(File auditFile) {
+	public static TreeSet<SourceFileVersion> readAuditCsvFile(File auditFile) {
 		
-		Map<Integer, SourceFileVersion> versionMap = new HashMap<Integer, SourceFileVersion>();
+		//Map<Integer, SourceFileVersion> versionMap = new HashMap<Integer, SourceFileVersion>();
+		TreeSet<SourceFileVersion> versionHistory = new TreeSet<SourceFileVersion>();
 		
 		String[] headers = null, values = null;
 		BufferedReader br = null;
@@ -76,7 +81,8 @@ public class CsvFileReader {
             	headers = line.split(seperator);
             }
             while ((line = br.readLine()) != null) {
-            	int version = -1;
+            	//int version = -1;
+            	String versionIndex = "";
             	String creationDate = "";
             	String createdBy = "";
             	
@@ -84,20 +90,29 @@ public class CsvFileReader {
                 for (int i = 0; i < headers.length; i++) {                	
                 	//versionMap.put(headers[i], values[i]);
                 	switch (headers[i]) {
-                		case "Version" : version = Integer.valueOf(values[i]);
+                		case "Version" : versionIndex = values[i];
                 		case "CreationDate" : creationDate = values[i];
                 		case "CreatedBy" : createdBy = values[i];
                 	}                	
                 }
-                SourceFileVersion sourceFileVersion = new SourceFileVersion(createdBy, creationDate);
-                versionMap.put(version, sourceFileVersion);
+        		SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMddhhmmss");
+        		Date date = dateFormat.parse(creationDate);
+        		//String versionFileName = version + "-" + auditFile.getName().substring(0, auditFile.getName().indexOf("-"));
+        		
+        		System.out.println("Version Index: " + versionIndex);
+        		
+                SourceFileVersion sourceFileVersion = new SourceFileVersion(versionIndex, createdBy, date);
+                versionHistory.add(sourceFileVersion);
+                //versionMap.put(version, sourceFileVersion);
             }
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
+        } catch (ParseException e) {
+			e.printStackTrace();
+		} finally {
             if (br != null) {
                 try {
                     br.close();
@@ -106,6 +121,7 @@ public class CsvFileReader {
                 }
             }
         }
-		return versionMap;
+		//return versionMap;
+		return versionHistory;
 	}
 }

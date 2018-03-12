@@ -9,12 +9,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TreeSet;
 
+import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 
@@ -63,6 +64,8 @@ public class RTCCodeImporter {
 	private int workItemId;
 	
 	private int versionCount = 0;
+	
+	private static final Logger LOGGER = Logger.getLogger(RTCCodeImporter.class);
 	
 	/**
 	 * @param teamRepositoryURI
@@ -300,23 +303,34 @@ public class RTCCodeImporter {
         }
         
         //Get Source File Version History
-        Map<Integer, SourceFileVersion> history = sourceFile.getHistory();
+        //Map<Integer, SourceFileVersion> history = sourceFile.getHistory();
+        TreeSet<SourceFileVersion> versionHistory = sourceFile.getVersionHistory();
         
-        for (int i = 0; i < history.size(); i++) {
-    	SourceFileVersion sourceFileVersion = history.get(i);
-	    	File file = new File(sourceFileVersion.getVersionFileName());
-	    	String fileName = sourceFile.getName();
+        //for (int i = 0; i < history.size(); i++) {
+        //int version = 1;
+        for (SourceFileVersion sourceFileVersion : versionHistory) {
+        	//SourceFileVersion sourceFileVersion = history.get(i);
+        	String fileName = sourceFile.getName();
+        	String filePath = sourceFile.getPath();
+        	String versionIndex = sourceFileVersion.getVersionFileName();
+        	String versionFilePath = filePath + "/" + versionIndex + "-" + fileName;
+        	//System.out.println("Version File Path: " + versionFilePath);
+	    	File versionFile = new File(versionFilePath);
+	    	LOGGER.info("File Version Path: " + versionFile.getAbsolutePath());
+	    	
 	    	String createdBy = sourceFileVersion.getCreatedBy();
-	    	String creationDate = sourceFileVersion.getCreationDate();
+	    	Date creationDate = sourceFileVersion.getCreationDate();
 	    	
-	    	SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMddhhmmss");
+	    	//SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMddhhmmss");
 	    	
-	    	int version = i;
-	    	String comment = "Checking-in File: " + fileName + " version: " + version 
+	    	//int version = i;
+	    	String comment = "Checking-in File: " + fileName + " version: " + (versionCount + 1)
 	    			+ " (Owner " + createdBy + ")";
-	    	System.out.println(comment);
-	    	Date date = dateFormat.parse(creationDate);
-	    	System.out.println("Creation Date: " + date);
+	    	//System.out.println(comment);
+	    	LOGGER.info(comment);
+	    	//Date date = dateFormat.parse(creationDate);
+	    	LOGGER.info("Creation Date: " + creationDate);
+	    	//System.out.println("Creation Date: " + creationDate);
 	    	
 	    	IContributor creator = null;
             try {
@@ -326,16 +340,19 @@ public class RTCCodeImporter {
             	//User Not Found in Repo
             	if (e instanceof ItemNotFoundException) {
             		creator = this.findContributor(teamRepository, "TestJazzAdmin1", monitor);
-            		System.out.println(e.getMessage());
-            		System.out.println("Using default Admin User.");
+            		LOGGER.warn(e.getMessage());
+            		LOGGER.info("Using default Admin User.");
+            		//System.out.println(e.getMessage());
+            		//System.out.println("Using default Admin User.");
             	}
             }
 	    	//Commit File Version to Repository
-	    	fileItem = scmClient.addFileToSourceControl(teamRepository, file, fileName, sourceWorkspaceConnection, 
-	    			componentHandle, config, comment, date, creator, workItem, monitor);
+	    	fileItem = scmClient.addFileToSourceControl(teamRepository, versionFile, fileName, sourceWorkspaceConnection, 
+	    			componentHandle, config, comment, creationDate, creator, workItem, monitor);
 	    	
 	    	//Deliver change to Target Stream
-	    	System.out.println("Delivering change set to Stream");
+	    	LOGGER.info("Delivering change set to Stream");
+	    	//System.out.println("Delivering change set to Stream");
 	    	scmClient.deliverChangeSetsToStream(teamRepository, sourceWorkspaceConnection, targetStreamConnection, 
 	    			componentHandle, monitor);
 	    	
@@ -343,11 +360,12 @@ public class RTCCodeImporter {
 	    	IVersionable versionable = config.fetchCompleteItem(fileItem, monitor);
 	    	
 	    	//Set custom attributes
-	    	System.out.println("Setting custom attributes");
+	    	LOGGER.info("Setting custom attributes");
+	    	//System.out.println("Setting custom attributes");
 	    	Map<String, String> attributes = sourceFile.getMetadata();
 	    	ScmAttributeUtils.setAttributes(versionable, attributes, ScmUtils.getScmService(teamRepository));
 	    	
-	    	ScmAttributeUtils.printAttributes(versionable, ScmUtils.getScmService(teamRepository));
+	    	ScmAttributeUtils.printAttributes(versionable, ScmUtils.getScmService(teamRepository), LOGGER);
 	    	versionCount++;
         }
 		
@@ -382,28 +400,33 @@ public class RTCCodeImporter {
         return scmAttributeDefs;
 	}
 	
-	ArrayList<SourceFile> getSourceFileList() {
+	private ArrayList<SourceFile> getSourceFileList() {
 		FolderReader folderReader = new FolderReader();
 		
-		return folderReader.readFolderContents(this.getSourceFolderName());
+		return folderReader.readFolderContents(this.getSourceFolderName(), LOGGER);
 	}
 	
-	void doImport(ArrayList<SourceFile> sourceFileList) {
+	private void doImport(ArrayList<SourceFile> sourceFileList) {
+		
 	    TeamPlatform.startup();             
         try {     
             IProgressMonitor monitor = new NullProgressMonitor();
-            System.out.println("Logging in to \"" + this.getTeamRepositoryURI() + "\" ...");
+            //System.out.println("Logging in to \"" + this.getTeamRepositoryURI() + "\" ...");
+            LOGGER.info("Logging in to \"" + this.getTeamRepositoryURI() + "\" ...");
             ITeamRepository teamRepository = login(this.getTeamRepositoryURI(), this.getUserName(), 
             		this.getPassword(), monitor);
-            System.out.println("Login success!");
+            //System.out.println("Login success!");
+            LOGGER.info("Login success!");
             
             IProjectArea projectArea = ScmUtils.getProjectArea(teamRepository, this.getProjectAreaName());
-            System.out.println("Project Area: " + projectArea.getName());
+            //System.out.println("Project Area: " + projectArea.getName());
+            LOGGER.info("Project Area: " + projectArea.getName());
 
             importSourceFilesToRTC(sourceFileList, teamRepository, 
             		this.getSourceWorkspaceName(), this.getTargetStreamName(), this.getComponentName(), monitor);            
         } catch (TeamRepositoryException e) {
-            System.out.println("RTC Error: " + e.getMessage());
+            //System.out.println("RTC Error: " + e.getMessage());
+            LOGGER.error("RTC Error: " + e.getMessage());
         } catch (IOException e) {
 			e.printStackTrace();
 		} catch (ParseException e) {
@@ -424,15 +447,17 @@ public class RTCCodeImporter {
 	 */
     public static void main(String[] args) {
     	
+    	//Logger logger = Logger.getLogger(RTCCodeImporter.class);
+    	
     	Properties importProps = new Properties();
     	try {
-			importProps.load(new FileInputStream("C:/git_projects/rtc-code-importer/za.co.indigocube.rtc.code.importer/src/za/co/indigocube/rtc/code/importer/resources/import.properties"));
+			importProps.load(new FileInputStream("resources/import.properties"));
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOGGER.error("Unable to load properties file", e);
+			//e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOGGER.error("Error reading properties file");
+			//e.printStackTrace();
 		}
     	
 		//Repo Settings
@@ -479,7 +504,7 @@ public class RTCCodeImporter {
 	    int numberOfSourceFiles = sourceFileList.size();
 	    int numberOfVersions = rtcCodeImporter.getVersionCount();
 	    
-	    System.out.println("Import Complete: " + numberOfSourceFiles + " Files, " + numberOfVersions + " Versions.");
+	    LOGGER.info("Import Complete: " + numberOfSourceFiles + " Files, " + numberOfVersions + " Versions.");
 	    
     }
 }

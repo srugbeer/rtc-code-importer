@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import za.co.indigocube.rtc.code.importer.scm.attribute.model.ScmAttributeDefinition;
 
 import com.ibm.team.process.client.IProcessClientService;
@@ -27,8 +29,13 @@ public class ScmAttributeUtils {
 	
 	public static void printAttributes(IVersionableHandle versionable, IScmService scmService) 
 			throws TeamRepositoryException {
+		printAttributes(versionable, scmService, Logger.getRootLogger());
+	}
+	
+	public static void printAttributes(IVersionableHandle versionable, IScmService scmService, 
+			Logger logger) throws TeamRepositoryException {
 		IVersionableHandle[] versionables = {versionable};
-		printAttributes(versionables, scmService);
+		printAttributes(versionables, scmService, logger);
 	}
 	
 	/**
@@ -36,11 +43,12 @@ public class ScmAttributeUtils {
 	 * 
 	 * @param vhandles
 	 * @param scmService
+	 * @param logger
 	 * @throws TeamRepositoryException
 	 */
-	public static void printAttributes(IVersionableHandle[] vhandles, IScmService scmService)
+	public static void printAttributes(IVersionableHandle[] vhandles, IScmService scmService, Logger logger)
 			throws TeamRepositoryException {
-		System.out.println("Custom Attributes:");
+		logger.info("Custom Attributes:");
 		ICustomAttributeList[] versionableAttributesList = scmService
 				.fetchCustomAttributesForVersionable(vhandles, null);
 
@@ -48,23 +56,23 @@ public class ScmAttributeUtils {
 			ICustomAttributeList attributeList = versionableAttributesList[i];
 			Map<String, Object> attributeMap = attributeList
 					.getCustomAttributes();
-			printAttributes(attributeMap);
+			printAttributes(attributeMap, logger);
 		}
 	}
-
-
+	
 	/**
 	 * @param message
 	 * @param attributeMap
+	 * @param Logger
 	 */
-	private static void printAttributes(Map<String, Object> attributeMap) {
+	private static void printAttributes(Map<String, Object> attributeMap, Logger logger) {
 		Set<String> keys = attributeMap.keySet();
 		if(keys.isEmpty()){
-			System.out.print("No attributes found:");
+			logger.warn("No attributes found:");
 		}
 		for (String key : keys) {
 			Object value = attributeMap.get(key);
-			printAttributeValue(key, value);			
+			printAttributeValue(key, value, logger);			
 		}	
 	}
 
@@ -72,12 +80,13 @@ public class ScmAttributeUtils {
 	 * @param message
 	 * @param key
 	 * @param value
+	 * @param logger
 	 */
-	private static void printAttributeValue(String key, Object value) {
+	private static void printAttributeValue(String key, Object value, Logger logger) {
 		if (value != null) {
-			System.out.println("Name: " + key + " Value: " + value);
+			logger.info("Name: " + key + " Value: " + value);
 		} else {
-			System.out.println("Name: " + key + " Value: <None>");
+			logger.info("Name: " + key + " Value: <None>");
 		}
 	}
 	

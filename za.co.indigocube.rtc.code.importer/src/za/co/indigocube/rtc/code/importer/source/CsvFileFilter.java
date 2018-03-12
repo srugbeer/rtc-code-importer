@@ -16,8 +16,8 @@ public class CsvFileFilter implements FileFilter {
 	 * @see java.io.FileFilter#accept(java.io.File)
 	 */
 	@Override
-	public boolean accept(File pathname) {
-		if (pathname.isFile() && pathname.getName().endsWith("csv"))
+	public boolean accept(File file) {
+		if (file.isFile() && file.getName().toLowerCase().endsWith(".csv"))
 			return true;
 		else
 			return false;
