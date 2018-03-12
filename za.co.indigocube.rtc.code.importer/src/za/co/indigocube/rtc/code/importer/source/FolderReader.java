@@ -53,13 +53,13 @@ public class FolderReader {
 					File[] csvFiles = sourceDir.listFiles(new CsvFileFilter());
 					for (File csvFile : csvFiles) {
 						//System.out.println("CSV File: " + csvFile.getName());
-						if (csvFile.getName().equals(metadataFileName)) {
+						if (csvFile.getName().toLowerCase().equals(metadataFileName)) {
 							//System.out.println("Reading metadata file...");
 							logger.info("Reading metadata file...");
 							metadata = CsvFileReader.readMetadataCsvFile(csvFile);
 							//System.out.println(metadata);
 						}
-						if (csvFile.getName().equals(auditFileName)) {
+						if (csvFile.getName().toLowerCase().equals(auditFileName)) {
 							//System.out.println("Reading audit file...");
 							logger.info("Reading audit file...");
 							versionHistory = CsvFileReader.readAuditCsvFile(csvFile);
