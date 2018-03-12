@@ -16,14 +16,21 @@ public class MainframeSourceFileFilter implements FileFilter {
 	 * @see java.io.FileFilter#accept(java.io.File)
 	 */
 	@Override
-	public boolean accept(File pathname) {
-		if (pathname.isFile() && 
-				(pathname.getName().endsWith("cbl") ||
-				 pathname.getName().endsWith("jcl")))
-		{
-			return true;
-		}
-		else return false;
+	public boolean accept(File file) {
+		
+		return ((new AssemblerFileFilter()).accept(file) ||
+				(new CobolFileFilter().accept(file) ||
+				(new CopybookFileFilter().accept(file) ||
+				(new JclFileFilter().accept(file)))));
+		
+//		if (pathname.isFile() && 
+//				(pathname.getName().endsWith(".cbl") ||
+//				 pathname.getName().endsWith(".cpy") ||
+//				 pathname.getName().endsWith(".jcl") ||
+//				 pathname.getName().endsWith(".asm")))
+//			return true;
+//		else 
+//			return false;
 	}
 
 }
