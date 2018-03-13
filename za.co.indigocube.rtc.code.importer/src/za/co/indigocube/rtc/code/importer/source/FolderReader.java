@@ -80,6 +80,8 @@ public class FolderReader {
 					SourceFile sourceFile = new SourceFile(filename, sourceDir.getAbsolutePath(), metadata, versionHistory);
 					//System.out.println("Source File: " + sourceFile.getName()); 
 					logger.info("Source File: " + sourceFile.getName());
+					logger.info("\tHistory: " + sourceFile.getVersionHistory());
+					logger.info("\tMetadata: " + sourceFile.getMetadata());
 					//System.out.println("Number of Versions: " + sourceFile.getNumberOfVersions());
 					logger.info("Number of Versions: " + sourceFile.getNumberOfVersions());
 					sourceFiles.add(sourceFile);
