@@ -12,8 +12,9 @@ import java.util.Date;
 public class SourceFileVersion implements Comparable<SourceFileVersion> {
 	//private int fVersion;
 	private String fVersionFileName;
-	private String fCreatedBy;
 	private Date fCreationDate;
+	private String fCreatedBy;
+	private String fProject;
 	
 	/**
 	 * @param createdBy
@@ -26,14 +27,26 @@ public class SourceFileVersion implements Comparable<SourceFileVersion> {
 	
 	/**
 	 * @param versionFileName
-	 * @param createdBy
-	 * @param creationDate
+	 * @param createdDate
+	 * @param creationBy
 	 */
 	public SourceFileVersion(String versionFileName, String createdBy, Date creationDate) {
 		//this.setVersion(version);
+		new SourceFileVersion(versionFileName, createdBy, creationDate, "");
+	}
+	
+	/**
+	 * @param versionFileName
+	 * @param createdDate
+	 * @param creationBy
+	 * @param project
+	 */
+	public SourceFileVersion(String versionFileName, String createdBy, Date creationDate, String project) {
+		//this.setVersion(version);
 		this.setVersionFileName(versionFileName);
-		this.setCreatedBy(createdBy);
 		this.setCreationDate(creationDate);		
+		this.setCreatedBy(createdBy);
+		this.setProject(project);
 	}
 	
 	/**
@@ -87,15 +100,30 @@ public class SourceFileVersion implements Comparable<SourceFileVersion> {
 		this.fCreationDate = creationDate;
 	}
 	
+	/**
+	 * @return the Project
+	 */
+	public String getProject() {
+		return fProject;
+	}
+
+	/**
+	 * @param project the Project to set
+	 */
+	public void setProject(String project) {
+		this.fProject = project;
+	}
+
 	@Override
 	public String toString() {
-		return "Version File: " + this.getVersionFileName() + ", Creation Date: " + 
-					this.getCreationDate() + ", Created By: " + this.getCreatedBy();
+		return "Version File: " + this.getVersionFileName() + 
+				"; Creation Date: " + this.getCreationDate() + 
+				"; Created By: " + this.getCreatedBy() + 
+				"; Project: " + this.getProject();
 	}
 
 	@Override
 	public int compareTo(SourceFileVersion o) {
-		// TODO Auto-generated method stub
 		return this.fCreationDate.compareTo(o.fCreationDate);
 	}
 
