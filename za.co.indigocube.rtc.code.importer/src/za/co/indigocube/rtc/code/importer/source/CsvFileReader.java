@@ -85,6 +85,7 @@ public class CsvFileReader {
             	String versionIndex = "";
             	String creationDate = "";
             	String createdBy = "";
+            	String project = "";
             	
                 values = line.split(seperator);                
                 for (int i = 0; i < headers.length; i++) {                	
@@ -93,15 +94,16 @@ public class CsvFileReader {
                 		case "Version" : versionIndex = values[i];
                 		case "CreationDate" : creationDate = values[i];
                 		case "CreatedBy" : createdBy = values[i];
+                		case "Project" : project = values[i];
                 	}                	
                 }
         		SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMddhhmmss");
         		Date date = dateFormat.parse(creationDate);
         		//String versionFileName = version + "-" + auditFile.getName().substring(0, auditFile.getName().indexOf("-"));
         		
-        		System.out.println("Version Index: " + versionIndex);
+        		//System.out.println("Version Index: " + versionIndex);
         		
-                SourceFileVersion sourceFileVersion = new SourceFileVersion(versionIndex, createdBy, date);
+                SourceFileVersion sourceFileVersion = new SourceFileVersion(versionIndex, createdBy, date, project);
                 versionHistory.add(sourceFileVersion);
                 //versionMap.put(version, sourceFileVersion);
             }
