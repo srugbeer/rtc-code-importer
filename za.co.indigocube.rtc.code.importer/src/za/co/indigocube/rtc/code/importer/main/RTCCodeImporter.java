@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -278,6 +279,9 @@ public class RTCCodeImporter {
         //Get Work Item Common
         IWorkItemCommon wiCommon = WorkItemUtils.getWorkItemCommon(teamRepository);
         
+        //Get Project Area
+        IProjectArea projectArea = ScmUtils.getProjectArea(teamRepository, this.getProjectAreaName());
+        
         IWorkItem workItem = null;
 	    
 	    //Find Work Item
@@ -287,7 +291,7 @@ public class RTCCodeImporter {
         }
         else {
         	//Create new Work Item
-        	IProjectArea projectArea = ScmUtils.getProjectArea(teamRepository, this.getProjectAreaName());
+        	
         	String workItemTypeId = "task";
         	String devLineName = "Main Development";
         	String summary = "Import " + sourceFile.getName();
@@ -308,6 +312,7 @@ public class RTCCodeImporter {
         
         //for (int i = 0; i < history.size(); i++) {
         //int version = 1;
+    	//LOGGER.info("================================================================");
         for (SourceFileVersion sourceFileVersion : versionHistory) {
         	//SourceFileVersion sourceFileVersion = history.get(i);
         	String fileName = sourceFile.getName();
@@ -320,12 +325,13 @@ public class RTCCodeImporter {
 	    	
 	    	String createdBy = sourceFileVersion.getCreatedBy();
 	    	Date creationDate = sourceFileVersion.getCreationDate();
+	    	String project = sourceFileVersion.getProject();
 	    	
 	    	//SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMddhhmmss");
 	    	
 	    	//int version = i;
-	    	String comment = "Checking-in File: " + fileName + " version: " + (versionCount + 1)
-	    			+ " (Owner " + createdBy + ")";
+	    	String comment = "Imported: " + fileName + " version: " + (versionCount + 1)
+	    			+ " Owner: " + createdBy + " Project: " + project;
 	    	//System.out.println(comment);
 	    	LOGGER.info(comment);
 	    	//Date date = dateFormat.parse(creationDate);
@@ -346,6 +352,22 @@ public class RTCCodeImporter {
             		//System.out.println("Using default Admin User.");
             	}
             }
+            
+/*            //Create Work Item for Project
+        	String workItemTypeId = "com.ibm.team.apt.workItemType.story";
+        	String devLineName = "Main Development";
+        	String summary = project;
+        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
+        	//Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+        	Timestamp creationTime = new Timestamp(creationDate.getTime());
+        	IContributor loggedinUser = teamRepository.loggedInContributor();
+        	
+        	IDevelopmentLine devLine = WorkItemUtils.findDevelopmentLine(teamRepository, projectArea, devLineName, monitor);
+    		IIterationHandle currentIteration = devLine.getCurrentIteration();
+        	
+        	workItem = wiClient.createWorkItem(teamRepository, projectArea, workItemTypeId, summary, rootCategory, 
+        			creationTime, loggedinUser, loggedinUser, currentIteration, monitor); */
+            
 	    	//Commit File Version to Repository
 	    	fileItem = scmClient.addFileToSourceControl(teamRepository, versionFile, fileName, sourceWorkspaceConnection, 
 	    			componentHandle, config, comment, creationDate, creator, workItem, monitor);
@@ -367,6 +389,7 @@ public class RTCCodeImporter {
 	    	
 	    	ScmAttributeUtils.printAttributes(versionable, ScmUtils.getScmService(teamRepository), LOGGER);
 	    	versionCount++;
+	    	LOGGER.info("");
         }
 		
 		return fileItem;		
@@ -420,7 +443,7 @@ public class RTCCodeImporter {
             
             IProjectArea projectArea = ScmUtils.getProjectArea(teamRepository, this.getProjectAreaName());
             //System.out.println("Project Area: " + projectArea.getName());
-            LOGGER.info("Project Area: " + projectArea.getName());
+            LOGGER.info("Project Area: " + projectArea.getName() + "\n");
 
             importSourceFilesToRTC(sourceFileList, teamRepository, 
             		this.getSourceWorkspaceName(), this.getTargetStreamName(), this.getComponentName(), monitor);            
@@ -440,6 +463,42 @@ public class RTCCodeImporter {
 			IProgressMonitor monitor) throws TeamRepositoryException {
         return teamRepository.contributorManager().fetchContributorByUserId(contributorName, monitor);
         
+	}
+	
+	public String formatExecutionTime(long executionTime) {
+		long days = TimeUnit.MILLISECONDS.toDays(executionTime);
+		executionTime -= TimeUnit.DAYS.toMillis(days);
+		long hours = TimeUnit.MILLISECONDS.toHours(executionTime);
+		executionTime -= TimeUnit.HOURS.toMillis(hours);
+		long minutes = TimeUnit.MILLISECONDS.toMinutes(executionTime);
+		executionTime -= TimeUnit.MINUTES.toMillis(minutes);
+		long seconds = TimeUnit.MILLISECONDS.toSeconds(executionTime);
+		executionTime -= TimeUnit.SECONDS.toMillis(seconds);
+		long milliseconds = TimeUnit.MILLISECONDS.toMillis(executionTime);
+		
+		StringBuilder executionTimeString = new StringBuilder();
+		
+		if (days > 0) {
+			executionTimeString.append(days + "d");
+			executionTimeString.append(" ");
+		}
+		if (hours > 0) {
+			executionTimeString.append(hours + "h");
+			executionTimeString.append(" ");
+		}
+		if (minutes > 0) {
+			executionTimeString.append(minutes + "m");
+			executionTimeString.append(" ");		    	  
+		}
+		if (seconds > 0) {
+			executionTimeString.append(seconds + "s");
+			executionTimeString.append(" ");
+		}
+		if (milliseconds > 0) {
+			executionTimeString.append(milliseconds + "ms");
+		}
+		
+		return executionTimeString.toString();
 	}
     
 	/**
@@ -493,18 +552,46 @@ public class RTCCodeImporter {
 	    
 	    //final int WORKITEM_ID = -1;
 	    
+	    long start, end, total;
+	    
+	    //LOGGER.info("********************************************************************");
+	    LOGGER.info("Started import process...\n");
+	    long importStart = System.currentTimeMillis();
 	    RTCCodeImporter rtcCodeImporter = new RTCCodeImporter(REPOSITORY_ADDRESS, USERNAME, PASSWORD, 
 	    		PROJECT_AREA, WORKSPACE_NAME, STREAM_NAME, COMPONENT_NAME, SOURCE_FOLDER, WORKITEM_ID);
 	    
+	    start = System.currentTimeMillis();
+	    LOGGER.info("Started reading source folder...");
 	    //Get Source Files
 	    ArrayList<SourceFile> sourceFileList = rtcCodeImporter.getSourceFileList();
+	    end = System.currentTimeMillis();
 	    
+	    total = end - start;
+	    String totalTimeReadingFiles = rtcCodeImporter.formatExecutionTime(total);
+	    LOGGER.info("********************************************************************");
+	    LOGGER.info("Completed reading source folder in " + totalTimeReadingFiles);
+	    LOGGER.info("********************************************************************\n");
+	    LOGGER.info("Start Importing file versions...");
+	    start = System.currentTimeMillis();
 	    //Import Source Files
 	    rtcCodeImporter.doImport(sourceFileList);
+	    end = System.currentTimeMillis();
+	    
+	    total = end - start;
+	    String totalImportTime = rtcCodeImporter.formatExecutionTime(total);
+	    LOGGER.info("********************************************************************");
+	    LOGGER.info("Completed importing file versions in " + totalImportTime);
+	    LOGGER.info("********************************************************************\n");
+	    
 	    int numberOfSourceFiles = sourceFileList.size();
 	    int numberOfVersions = rtcCodeImporter.getVersionCount();
 	    
-	    LOGGER.info("Import Complete: " + numberOfSourceFiles + " Files, " + numberOfVersions + " Versions.");
+	    long importEnd = System.currentTimeMillis();
+	    String totalTime = rtcCodeImporter.formatExecutionTime(importEnd - importStart);
 	    
+	    LOGGER.info("********************************************************************"); 
+	    LOGGER.info("Import Complete in " + totalTime + ": " 
+	    		+ numberOfSourceFiles + " Files, " + numberOfVersions + " Versions.");
+	    LOGGER.info("********************************************************************");
     }
 }

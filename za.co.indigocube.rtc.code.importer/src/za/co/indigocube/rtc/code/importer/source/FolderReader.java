@@ -32,7 +32,8 @@ public class FolderReader {
 		File parentFolder = new File(parentFolderName);
 		
 		if (parentFolder.isDirectory()) {
-
+			logger.info("Source Folder: " + parentFolderName + "\n");
+	    	//logger.info("================================================================");
 			File[] sourceDirs = parentFolder.listFiles();
 			for (File sourceDir : sourceDirs) {
 				if (sourceDir.isDirectory()) {
@@ -83,7 +84,8 @@ public class FolderReader {
 					logger.info("\tHistory: " + sourceFile.getVersionHistory());
 					logger.info("\tMetadata: " + sourceFile.getMetadata());
 					//System.out.println("Number of Versions: " + sourceFile.getNumberOfVersions());
-					logger.info("Number of Versions: " + sourceFile.getNumberOfVersions());
+					logger.info("Number of Versions: " + sourceFile.getNumberOfVersions() + "\n");
+					//logger.info("========================================================");
 					sourceFiles.add(sourceFile);
 				}
 			}

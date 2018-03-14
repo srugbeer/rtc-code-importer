@@ -84,9 +84,9 @@ public class ScmAttributeUtils {
 	 */
 	private static void printAttributeValue(String key, Object value, Logger logger) {
 		if (value != null) {
-			logger.info("Name: " + key + " Value: " + value);
+			logger.info("\tName: " + key + "\tValue: " + value);
 		} else {
-			logger.info("Name: " + key + " Value: <None>");
+			logger.info("\tName: " + key + "\tValue: <None>");
 		}
 	}
 	
