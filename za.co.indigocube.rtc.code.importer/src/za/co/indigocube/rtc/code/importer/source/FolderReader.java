@@ -32,9 +32,10 @@ public class FolderReader {
 		File parentFolder = new File(parentFolderName);
 		
 		if (parentFolder.isDirectory()) {
-			logger.info("Source Folder: " + parentFolderName + "\n");
+			logger.info("Parent folder: " + parentFolderName);
 	    	//logger.info("================================================================");
 			File[] sourceDirs = parentFolder.listFiles();
+			logger.info("Parent Folder contains " + sourceDirs.length + " source folders.\n");
 			for (File sourceDir : sourceDirs) {
 				if (sourceDir.isDirectory()) {
 					String dirName = sourceDir.getName();					

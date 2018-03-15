@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
@@ -61,10 +62,16 @@ public class RTCCodeImporter {
 	private String sourceWorkspaceName;
 	private String targetStreamName;
 	private String componentName;
+	private String defaultChangesetOwner;
 	private String sourceFolderName;
 	private int workItemId;
 	
-	private int versionCount = 0;
+	private int fileCount;
+	private int versionCount;
+	private int skippedFileCount;
+	private int skippedVersionCount;
+	
+	private HashMap<String, Integer> projectMap;
 	
 	private static final Logger LOGGER = Logger.getLogger(RTCCodeImporter.class);
 	
@@ -81,7 +88,7 @@ public class RTCCodeImporter {
 	public RTCCodeImporter(String teamRepositoryURI, String userName,
 			String password, String projectAreaName,
 			String sourceWorkspaceName, String targetStreamName,
-			String componentName, String sourceFolderName, int workItemId) {
+			String componentName, String defaultChangesetOwner, String sourceFolderName, int workItemId) {
 		super();
 		this.setTeamRepositoryURI(teamRepositoryURI);
 		this.setUserName(userName);
@@ -90,8 +97,15 @@ public class RTCCodeImporter {
 		this.setSourceWorkspaceName(sourceWorkspaceName);
 		this.setTargetStreamName(targetStreamName);
 		this.setComponentName(componentName);
+		this.setDefaultChangesetOwner(defaultChangesetOwner);
 		this.setSourceFolderName(sourceFolderName);
 		this.setWorkItemId(workItemId);
+		this.setFileCount(0);
+		this.setVersionCount(0);
+		this.setSkippedFileCount(0);
+		this.setSkippedVersionCount(0);
+		this.setProjectMap(new HashMap<String, Integer>());
+		
 	}
 
 	/**
@@ -193,6 +207,20 @@ public class RTCCodeImporter {
 	}
 
 	/**
+	 * @return the defaultChangesetOwner
+	 */
+	public String getDefaultChangesetOwner() {
+		return defaultChangesetOwner;
+	}
+
+	/**
+	 * @param defaultChangesetOwner the defaultChangesetOwner to set
+	 */
+	public void setDefaultChangesetOwner(String defaultChangesetOwner) {
+		this.defaultChangesetOwner = defaultChangesetOwner;
+	}
+
+	/**
 	 * @return the sourceFolderName
 	 */
 	public String getSourceFolderName() {
@@ -221,6 +249,20 @@ public class RTCCodeImporter {
 	}
 
 	/**
+	 * @return the fileCount
+	 */
+	public int getFileCount() {
+		return fileCount;
+	}
+
+	/**
+	 * @param fileCount the fileCount to set
+	 */
+	public void setFileCount(int fileCount) {
+		this.fileCount = fileCount;
+	}
+
+	/**
 	 * @return the versionCount
 	 */
 	public int getVersionCount() {
@@ -232,6 +274,48 @@ public class RTCCodeImporter {
 	 */
 	public void setVersionCount(int versionCount) {
 		this.versionCount = versionCount;
+	}
+
+	/**
+	 * @return the skippedFileCount
+	 */
+	public int getSkippedFileCount() {
+		return skippedFileCount;
+	}
+
+	/**
+	 * @param skippedFileCount the skippedFileCount to set
+	 */
+	public void setSkippedFileCount(int skippedFileCount) {
+		this.skippedFileCount = skippedFileCount;
+	}
+
+	/**
+	 * @return the skippedVersionCount
+	 */
+	public int getSkippedVersionCount() {
+		return skippedVersionCount;
+	}
+
+	/**
+	 * @param skippedVersionCount the skippedVersionCount to set
+	 */
+	public void setSkippedVersionCount(int skippedVersionCount) {
+		this.skippedVersionCount = skippedVersionCount;
+	}
+
+	/**
+	 * @return the projectMap
+	 */
+	public HashMap<String, Integer> getProjectMap() {
+		return projectMap;
+	}
+
+	/**
+	 * @param projectMap the projectMap to set
+	 */
+	public void setProjectMap(HashMap<String, Integer> projectMap) {
+		this.projectMap = projectMap;
 	}
 
 	public ITeamRepository login(String repositoryURI, String userName, String password, 
@@ -285,7 +369,7 @@ public class RTCCodeImporter {
         IWorkItem workItem = null;
 	    
 	    //Find Work Item
-        if (this.getWorkItemId() != -1) {
+        /*if (this.getWorkItemId() != -1) {
         	//Use Existing Work Item
         	workItem = wiClient.findWorkItem(teamRepository, this.getWorkItemId(), monitor);
         }
@@ -304,7 +388,7 @@ public class RTCCodeImporter {
         	
         	workItem = wiClient.createWorkItem(teamRepository, projectArea, workItemTypeId, summary, rootCategory, 
         			currentTime, loggedinUser, loggedinUser, currentIteration, monitor);
-        }
+        }*/
         
         //Get Source File Version History
         //Map<Integer, SourceFileVersion> history = sourceFile.getHistory();
@@ -325,6 +409,7 @@ public class RTCCodeImporter {
 	    	
 	    	if (!versionFile.exists()) {
 	    		LOGGER.warn("Source Version File does not exist, but is listed in the audit file. Skipping this version.\n");
+	    		this.skippedVersionCount++;
 	    	}
 	    	else {
 		    	String createdBy = sourceFileVersion.getCreatedBy();
@@ -349,29 +434,39 @@ public class RTCCodeImporter {
 	            catch (TeamRepositoryException e) {
 	            	//User Not Found in Repo
 	            	if (e instanceof ItemNotFoundException) {
-	            		creator = this.findContributor(teamRepository, "abap331", monitor);
+	            		creator = this.findContributor(teamRepository, this.getDefaultChangesetOwner(), 
+	            				monitor);
 	            		LOGGER.warn(e.getMessage());
-	            		LOGGER.info("Using default user.");
+	            		LOGGER.info("Using default user: " + creator.getName() + " (" + creator.getUserId() + ")");
 	            		//System.out.println(e.getMessage());
 	            		//System.out.println("Using default Admin User.");
 	            	}
 	            }
 	            
-	/*            //Create Work Item for Project
-	        	String workItemTypeId = "com.ibm.team.apt.workItemType.story";
-	        	String devLineName = "Main Development";
-	        	String summary = project;
-	        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
-	        	//Timestamp currentTime = new Timestamp(System.currentTimeMillis());
-	        	Timestamp creationTime = new Timestamp(creationDate.getTime());
-	        	IContributor loggedinUser = teamRepository.loggedInContributor();
-	        	
-	        	IDevelopmentLine devLine = WorkItemUtils.findDevelopmentLine(teamRepository, projectArea, devLineName, monitor);
-	    		IIterationHandle currentIteration = devLine.getCurrentIteration();
-	        	
-	        	workItem = wiClient.createWorkItem(teamRepository, projectArea, workItemTypeId, summary, rootCategory, 
-	        			creationTime, loggedinUser, loggedinUser, currentIteration, monitor); */
+	            //Create Work Item for Project
 	            
+	            //First check if Project Work Item already exists
+	            if (this.getProjectMap().containsKey(project)) {
+	            	int workitemId = this.getProjectMap().get(project);
+	            	workItem = wiClient.findWorkItem(teamRepository, workitemId, monitor);
+	            }
+	            else {
+		        	String workItemTypeId = "task";
+		        	String devLineName = "Main Development";
+		        	String summary = project;
+		        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
+		        	//Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+		        	Timestamp creationTime = new Timestamp(creationDate.getTime());
+		        	//IContributor loggedinUser = teamRepository.loggedInContributor();
+		        	
+		        	IDevelopmentLine devLine = WorkItemUtils.findDevelopmentLine(teamRepository, projectArea, devLineName, monitor);
+		    		IIterationHandle currentIteration = devLine.getCurrentIteration();
+		        	
+		        	workItem = wiClient.createWorkItem(teamRepository, projectArea, workItemTypeId, summary, rootCategory, 
+		        			creationTime, creator, creator, currentIteration, monitor);
+		        	//Add to project map
+		        	this.getProjectMap().put(project, workItem.getId());
+	            }
 		    	//Commit File Version to Repository
 		    	fileItem = scmClient.addFileToSourceControl(teamRepository, versionFile, fileName, sourceWorkspaceConnection, 
 		    			componentHandle, config, comment, creationDate, creator, workItem, monitor);
@@ -392,6 +487,8 @@ public class RTCCodeImporter {
 		    	ScmAttributeUtils.setAttributes(versionable, attributes, ScmUtils.getScmService(teamRepository));
 		    	
 		    	ScmAttributeUtils.printAttributes(versionable, ScmUtils.getScmService(teamRepository), LOGGER);
+		    	
+		    	//Close work item
 		    	version++;
 		    	versionCount++;
 		    	LOGGER.info("");
@@ -543,7 +640,8 @@ public class RTCCodeImporter {
 	    final String STREAM_NAME = importProps.getProperty("rtc.stream.name", "JKE Banking Dev Stream");
 	    final String COMPONENT_NAME = importProps.getProperty("rtc.component.name", "COBOL");
 	    final String WORKSPACE_NAME = importProps.getProperty("rtc.workspace.name", "admin JKE Banking Dev Stream");
-	    	    
+	    final String DEFAULT_CS_OWNER = importProps.getProperty("rtc.default.changeset.owner", USERNAME);
+	    
 	    //final String STREAM_NAME = "Mainframe Code Dev Stream";
 	    //final String COMPONENT_NAME = "COBOL";
 	    //final String WORKSPACE_NAME = "admin Mainframe Code Dev Stream Workspace";
@@ -564,10 +662,11 @@ public class RTCCodeImporter {
 	    LOGGER.info("Started import process...\n");
 	    long importStart = System.currentTimeMillis();
 	    RTCCodeImporter rtcCodeImporter = new RTCCodeImporter(REPOSITORY_ADDRESS, USERNAME, PASSWORD, 
-	    		PROJECT_AREA, WORKSPACE_NAME, STREAM_NAME, COMPONENT_NAME, SOURCE_FOLDER, WORKITEM_ID);
+	    		PROJECT_AREA, WORKSPACE_NAME, STREAM_NAME, COMPONENT_NAME, DEFAULT_CS_OWNER, 
+	    		SOURCE_FOLDER, WORKITEM_ID);
 	    
 	    start = System.currentTimeMillis();
-	    LOGGER.info("Started reading source folder...");
+	    LOGGER.info("Started reading source folders...");
 	    //Get Source Files
 	    ArrayList<SourceFile> sourceFileList = rtcCodeImporter.getSourceFileList();
 	    end = System.currentTimeMillis();
@@ -575,7 +674,7 @@ public class RTCCodeImporter {
 	    total = end - start;
 	    String totalTimeReadingFiles = rtcCodeImporter.formatExecutionTime(total);
 	    LOGGER.info("********************************************************************");
-	    LOGGER.info("Completed reading source folder in " + totalTimeReadingFiles);
+	    LOGGER.info("Completed reading source folders in " + totalTimeReadingFiles);
 	    LOGGER.info("********************************************************************\n");
 	    LOGGER.info("Start Importing file versions...");
 	    start = System.currentTimeMillis();
@@ -591,13 +690,15 @@ public class RTCCodeImporter {
 	    
 	    int numberOfSourceFiles = sourceFileList.size();
 	    int numberOfVersions = rtcCodeImporter.getVersionCount();
+	    int numberOfSkippedVersions = rtcCodeImporter.getSkippedVersionCount();
 	    
 	    long importEnd = System.currentTimeMillis();
 	    String totalTime = rtcCodeImporter.formatExecutionTime(importEnd - importStart);
 	    
 	    LOGGER.info("********************************************************************"); 
 	    LOGGER.info("Import Complete in " + totalTime + ": " 
-	    		+ numberOfSourceFiles + " Files, " + numberOfVersions + " Versions.");
+	    		+ numberOfSourceFiles + " Files, " + numberOfVersions + " Versions, "
+	    		+ numberOfSkippedVersions + " Versions Skipped.");
 	    LOGGER.info("********************************************************************");
     }
 }
