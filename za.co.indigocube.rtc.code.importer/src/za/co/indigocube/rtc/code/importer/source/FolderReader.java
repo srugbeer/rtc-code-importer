@@ -51,42 +51,48 @@ public class FolderReader {
 					//for (File sourceFile : sourceFiles) {
 					//	System.out.println("Source File: " + sourceFile.getName());
 					//}
-					File[] csvFiles = sourceDir.listFiles(new CsvFileFilter());
-					for (File csvFile : csvFiles) {
-						//System.out.println("CSV File: " + csvFile.getName());
-						if (csvFile.getName().toLowerCase().equals(metadataFileName)) {
-							//System.out.println("Reading metadata file...");
-							logger.info("Reading metadata file...");
-							metadata = CsvFileReader.readMetadataCsvFile(csvFile);
-							//System.out.println(metadata);
-						}
-						if (csvFile.getName().toLowerCase().equals(auditFileName)) {
-							//System.out.println("Reading audit file...");
-							logger.info("Reading audit file...");
-							versionHistory = CsvFileReader.readAuditCsvFile(csvFile);
-							//System.out.println(history);
-						}
-					}
 					
-					//Update version file names
-/*					for (int i = 0; i < mainframeSourceFiles.length; i++) {			
-						String versionFilePath = mainframeSourceFiles[i].getAbsolutePath();
-						String fileName = mainframeSourceFiles[i].getName();
-						int versionNumber = Integer.valueOf(fileName.substring(0, fileName.indexOf("-")));
-						//System.out.println("Version Number extracted from filename: " + versionNumber);
-						history.get(versionNumber).setVersionFileName(versionFilePath);
-					}*/
-					String filename = mainframeSourceFiles[0].getName().
-							substring(mainframeSourceFiles[0].getName().indexOf("-") + 1);
-					SourceFile sourceFile = new SourceFile(filename, sourceDir.getAbsolutePath(), metadata, versionHistory);
-					//System.out.println("Source File: " + sourceFile.getName()); 
-					logger.info("Source File: " + sourceFile.getName());
-					logger.info("\tHistory: " + sourceFile.getVersionHistory());
-					logger.info("\tMetadata: " + sourceFile.getMetadata());
-					//System.out.println("Number of Versions: " + sourceFile.getNumberOfVersions());
-					logger.info("Number of Versions: " + sourceFile.getNumberOfVersions() + "\n");
-					//logger.info("========================================================");
-					sourceFiles.add(sourceFile);
+					if (mainframeSourceFiles.length == 0) {
+						logger.warn("No source version files found. Skipping this source file: " + dirName + "\n");
+					}
+					else {
+						File[] csvFiles = sourceDir.listFiles(new CsvFileFilter());
+						for (File csvFile : csvFiles) {
+							//System.out.println("CSV File: " + csvFile.getName());
+							if (csvFile.getName().toLowerCase().equals(metadataFileName.toLowerCase())) {
+								//System.out.println("Reading metadata file...");
+								logger.info("Reading metadata file...");
+								metadata = CsvFileReader.readMetadataCsvFile(csvFile);
+								//System.out.println(metadata);
+							}
+							if (csvFile.getName().toLowerCase().equals(auditFileName.toLowerCase())) {
+								//System.out.println("Reading audit file...");
+								logger.info("Reading audit file...");
+								versionHistory = CsvFileReader.readAuditCsvFile(csvFile);
+								//System.out.println(history);
+							}
+						}
+						
+						//Update version file names
+	/*					for (int i = 0; i < mainframeSourceFiles.length; i++) {			
+							String versionFilePath = mainframeSourceFiles[i].getAbsolutePath();
+							String fileName = mainframeSourceFiles[i].getName();
+							int versionNumber = Integer.valueOf(fileName.substring(0, fileName.indexOf("-")));
+							//System.out.println("Version Number extracted from filename: " + versionNumber);
+							history.get(versionNumber).setVersionFileName(versionFilePath);
+						}*/
+						String filename = mainframeSourceFiles[0].getName().
+								substring(mainframeSourceFiles[0].getName().indexOf("-") + 1);
+						SourceFile sourceFile = new SourceFile(filename, sourceDir.getAbsolutePath(), metadata, versionHistory);
+						//System.out.println("Source File: " + sourceFile.getName()); 
+						logger.info("Source File: " + sourceFile.getName());
+						logger.info("\tHistory: " + sourceFile.getVersionHistory());
+						logger.info("\tMetadata: " + sourceFile.getMetadata());
+						//System.out.println("Number of Versions: " + sourceFile.getNumberOfVersions());
+						logger.info("Number of Versions: " + sourceFile.getNumberOfVersions() + "\n");
+						//logger.info("========================================================");
+						sourceFiles.add(sourceFile);
+					}
 				}
 			}
 		}

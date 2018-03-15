@@ -311,7 +311,7 @@ public class RTCCodeImporter {
         TreeSet<SourceFileVersion> versionHistory = sourceFile.getVersionHistory();
         
         //for (int i = 0; i < history.size(); i++) {
-        //int version = 1;
+        int version = 0;
     	//LOGGER.info("================================================================");
         for (SourceFileVersion sourceFileVersion : versionHistory) {
         	//SourceFileVersion sourceFileVersion = history.get(i);
@@ -323,73 +323,79 @@ public class RTCCodeImporter {
 	    	File versionFile = new File(versionFilePath);
 	    	LOGGER.info("File Version Path: " + versionFile.getAbsolutePath());
 	    	
-	    	String createdBy = sourceFileVersion.getCreatedBy();
-	    	Date creationDate = sourceFileVersion.getCreationDate();
-	    	String project = sourceFileVersion.getProject();
-	    	
-	    	//SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMddhhmmss");
-	    	
-	    	//int version = i;
-	    	String comment = "Imported: " + fileName + " version: " + (versionCount + 1)
-	    			+ " Owner: " + createdBy + " Project: " + project;
-	    	//System.out.println(comment);
-	    	LOGGER.info(comment);
-	    	//Date date = dateFormat.parse(creationDate);
-	    	LOGGER.info("Creation Date: " + creationDate);
-	    	//System.out.println("Creation Date: " + creationDate);
-	    	
-	    	IContributor creator = null;
-            try {
-            	creator = this.findContributor(teamRepository, createdBy, monitor);
-            }
-            catch (TeamRepositoryException e) {
-            	//User Not Found in Repo
-            	if (e instanceof ItemNotFoundException) {
-            		creator = this.findContributor(teamRepository, "TestJazzAdmin1", monitor);
-            		LOGGER.warn(e.getMessage());
-            		LOGGER.info("Using default Admin User.");
-            		//System.out.println(e.getMessage());
-            		//System.out.println("Using default Admin User.");
-            	}
-            }
-            
-/*            //Create Work Item for Project
-        	String workItemTypeId = "com.ibm.team.apt.workItemType.story";
-        	String devLineName = "Main Development";
-        	String summary = project;
-        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
-        	//Timestamp currentTime = new Timestamp(System.currentTimeMillis());
-        	Timestamp creationTime = new Timestamp(creationDate.getTime());
-        	IContributor loggedinUser = teamRepository.loggedInContributor();
-        	
-        	IDevelopmentLine devLine = WorkItemUtils.findDevelopmentLine(teamRepository, projectArea, devLineName, monitor);
-    		IIterationHandle currentIteration = devLine.getCurrentIteration();
-        	
-        	workItem = wiClient.createWorkItem(teamRepository, projectArea, workItemTypeId, summary, rootCategory, 
-        			creationTime, loggedinUser, loggedinUser, currentIteration, monitor); */
-            
-	    	//Commit File Version to Repository
-	    	fileItem = scmClient.addFileToSourceControl(teamRepository, versionFile, fileName, sourceWorkspaceConnection, 
-	    			componentHandle, config, comment, creationDate, creator, workItem, monitor);
-	    	
-	    	//Deliver change to Target Stream
-	    	LOGGER.info("Delivering change set to Stream");
-	    	//System.out.println("Delivering change set to Stream");
-	    	scmClient.deliverChangeSetsToStream(teamRepository, sourceWorkspaceConnection, targetStreamConnection, 
-	    			componentHandle, monitor);
-	    	
-	    	//Get Versionable full state
-	    	IVersionable versionable = config.fetchCompleteItem(fileItem, monitor);
-	    	
-	    	//Set custom attributes
-	    	LOGGER.info("Setting custom attributes");
-	    	//System.out.println("Setting custom attributes");
-	    	Map<String, String> attributes = sourceFile.getMetadata();
-	    	ScmAttributeUtils.setAttributes(versionable, attributes, ScmUtils.getScmService(teamRepository));
-	    	
-	    	ScmAttributeUtils.printAttributes(versionable, ScmUtils.getScmService(teamRepository), LOGGER);
-	    	versionCount++;
-	    	LOGGER.info("");
+	    	if (!versionFile.exists()) {
+	    		LOGGER.warn("Source Version File does not exist, but is listed in the audit file. Skipping this version.\n");
+	    	}
+	    	else {
+		    	String createdBy = sourceFileVersion.getCreatedBy();
+		    	Date creationDate = sourceFileVersion.getCreationDate();
+		    	String project = sourceFileVersion.getProject();
+		    	
+		    	//SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMddhhmmss");
+		    	
+		    	//int version = i;
+		    	String comment = "Imported: " + fileName + " version: " + (version + 1)
+		    			+ " Owner: " + createdBy + " Project: " + project;
+		    	//System.out.println(comment);
+		    	LOGGER.info(comment);
+		    	//Date date = dateFormat.parse(creationDate);
+		    	LOGGER.info("Creation Date: " + creationDate);
+		    	//System.out.println("Creation Date: " + creationDate);
+		    	
+		    	IContributor creator = null;
+	            try {
+	            	creator = this.findContributor(teamRepository, createdBy.toLowerCase(), monitor);
+	            }
+	            catch (TeamRepositoryException e) {
+	            	//User Not Found in Repo
+	            	if (e instanceof ItemNotFoundException) {
+	            		creator = this.findContributor(teamRepository, "abap331", monitor);
+	            		LOGGER.warn(e.getMessage());
+	            		LOGGER.info("Using default user.");
+	            		//System.out.println(e.getMessage());
+	            		//System.out.println("Using default Admin User.");
+	            	}
+	            }
+	            
+	/*            //Create Work Item for Project
+	        	String workItemTypeId = "com.ibm.team.apt.workItemType.story";
+	        	String devLineName = "Main Development";
+	        	String summary = project;
+	        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
+	        	//Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+	        	Timestamp creationTime = new Timestamp(creationDate.getTime());
+	        	IContributor loggedinUser = teamRepository.loggedInContributor();
+	        	
+	        	IDevelopmentLine devLine = WorkItemUtils.findDevelopmentLine(teamRepository, projectArea, devLineName, monitor);
+	    		IIterationHandle currentIteration = devLine.getCurrentIteration();
+	        	
+	        	workItem = wiClient.createWorkItem(teamRepository, projectArea, workItemTypeId, summary, rootCategory, 
+	        			creationTime, loggedinUser, loggedinUser, currentIteration, monitor); */
+	            
+		    	//Commit File Version to Repository
+		    	fileItem = scmClient.addFileToSourceControl(teamRepository, versionFile, fileName, sourceWorkspaceConnection, 
+		    			componentHandle, config, comment, creationDate, creator, workItem, monitor);
+		    	
+		    	//Deliver change to Target Stream
+		    	LOGGER.info("Delivering change set to Stream");
+		    	//System.out.println("Delivering change set to Stream");
+		    	scmClient.deliverChangeSetsToStream(teamRepository, sourceWorkspaceConnection, targetStreamConnection, 
+		    			componentHandle, monitor);
+		    	
+		    	//Get Versionable full state
+		    	IVersionable versionable = config.fetchCompleteItem(fileItem, monitor);
+		    	
+		    	//Set custom attributes
+		    	LOGGER.info("Setting custom attributes");
+		    	//System.out.println("Setting custom attributes");
+		    	Map<String, String> attributes = sourceFile.getMetadata();
+		    	ScmAttributeUtils.setAttributes(versionable, attributes, ScmUtils.getScmService(teamRepository));
+		    	
+		    	ScmAttributeUtils.printAttributes(versionable, ScmUtils.getScmService(teamRepository), LOGGER);
+		    	version++;
+		    	versionCount++;
+		    	LOGGER.info("");
+	    	}
         }
 		
 		return fileItem;		

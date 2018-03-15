@@ -35,12 +35,13 @@ public class CsvFileReader {
             br = new BufferedReader(new FileReader(metadataFile));
             
             //Read header line
-            line = br.readLine();
+            line = br.readLine().trim();
             if (line != null) {
             	metadataNames = line.split(seperator);
             }
             while ((line = br.readLine()) != null) {
                 // use comma as separator
+            	line = line.trim();
                 metadataValues = line.split(seperator);
                 for (int i = 0; i < metadataNames.length; i++) {
                 	metadataMap.put(metadataNames[i], metadataValues[i]);
@@ -76,11 +77,12 @@ public class CsvFileReader {
             br = new BufferedReader(new FileReader(auditFile));
             
             //Read header line
-            line = br.readLine();
+            line = br.readLine().trim();
             if (line != null) {
             	headers = line.split(seperator);
             }
             while ((line = br.readLine()) != null) {
+            	line = line.trim();
             	//int version = -1;
             	String versionIndex = "";
             	String creationDate = "";
@@ -97,7 +99,7 @@ public class CsvFileReader {
                 		case "Project" : project = values[i];
                 	}                	
                 }
-        		SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMddhhmmss");
+        		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmss");
         		Date date = dateFormat.parse(creationDate);
         		//String versionFileName = version + "-" + auditFile.getName().substring(0, auditFile.getName().indexOf("-"));
         		
