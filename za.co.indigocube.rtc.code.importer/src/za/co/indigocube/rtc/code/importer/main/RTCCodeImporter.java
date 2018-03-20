@@ -62,6 +62,7 @@ public class RTCCodeImporter {
 	private String sourceWorkspaceName;
 	private String targetStreamName;
 	private String componentName;
+	private String cobolPath;
 	private String defaultChangesetOwner;
 	private String sourceFolderName;
 	private int workItemId;
@@ -88,7 +89,7 @@ public class RTCCodeImporter {
 	public RTCCodeImporter(String teamRepositoryURI, String userName,
 			String password, String projectAreaName,
 			String sourceWorkspaceName, String targetStreamName,
-			String componentName, String defaultChangesetOwner, String sourceFolderName, int workItemId) {
+			String componentName, String cobolPath, String defaultChangesetOwner, String sourceFolderName, int workItemId) {
 		super();
 		this.setTeamRepositoryURI(teamRepositoryURI);
 		this.setUserName(userName);
@@ -97,6 +98,7 @@ public class RTCCodeImporter {
 		this.setSourceWorkspaceName(sourceWorkspaceName);
 		this.setTargetStreamName(targetStreamName);
 		this.setComponentName(componentName);
+		this.setCobolPath(cobolPath);
 		this.setDefaultChangesetOwner(defaultChangesetOwner);
 		this.setSourceFolderName(sourceFolderName);
 		this.setWorkItemId(workItemId);
@@ -204,6 +206,14 @@ public class RTCCodeImporter {
 	 */
 	public void setComponentName(String componentName) {
 		this.componentName = componentName;
+	}
+
+	public String getCobolPath() {
+		return cobolPath;
+	}
+
+	public void setCobolPath(String cobolPath) {
+		this.cobolPath = cobolPath;
 	}
 
 	/**
@@ -338,7 +348,7 @@ public class RTCCodeImporter {
 	}
 
 	private IFileItem importSourceFileToRTC(SourceFile sourceFile, ITeamRepository teamRepository,
-			String sourceWorkspaceName, String targetStreamName, String componentName, IProgressMonitor monitor) 
+			String sourceWorkspaceName, String targetStreamName, String componentName, String cobolPath, IProgressMonitor monitor) 
 					throws TeamRepositoryException, IOException, ParseException {
 		
 		IFileItem fileItem = null;
@@ -469,7 +479,7 @@ public class RTCCodeImporter {
 	            }
 		    	//Commit File Version to Repository
 		    	fileItem = scmClient.addFileToSourceControl(teamRepository, versionFile, fileName, sourceWorkspaceConnection, 
-		    			componentHandle, config, comment, creationDate, creator, workItem, monitor);
+		    			cobolPath, componentHandle, config, comment, creationDate, creator, workItem, monitor);
 		    	
 		    	//Deliver change to Target Stream
 		    	LOGGER.info("Delivering change set to Stream");
@@ -500,14 +510,14 @@ public class RTCCodeImporter {
 	
 	private ArrayList<IFileItem> importSourceFilesToRTC(ArrayList<SourceFile> sourceFiles, 
 			ITeamRepository teamRepository, String sourceWorkspaceName, String targetStreamName, 
-			String componentName, IProgressMonitor monitor) 
+			String componentName, String cobolPath, IProgressMonitor monitor) 
 					throws TeamRepositoryException, IOException, ParseException {
 		
 		ArrayList<IFileItem> fileItems = new ArrayList<IFileItem>();
 		
 		for (SourceFile sourceFile : sourceFiles) {
 			IFileItem fileItem = importSourceFileToRTC(sourceFile, teamRepository, sourceWorkspaceName, 
-					targetStreamName, componentName, monitor);
+					targetStreamName, componentName, cobolPath, monitor);
 			fileItems.add(fileItem);
 		}
 		
@@ -549,7 +559,8 @@ public class RTCCodeImporter {
             LOGGER.info("Project Area: " + projectArea.getName() + "\n");
 
             importSourceFilesToRTC(sourceFileList, teamRepository, 
-            		this.getSourceWorkspaceName(), this.getTargetStreamName(), this.getComponentName(), monitor);            
+            		this.getSourceWorkspaceName(), this.getTargetStreamName(), 
+            		this.getComponentName(), this.getCobolPath(),  monitor);            
         } catch (TeamRepositoryException e) {
             //System.out.println("RTC Error: " + e.getMessage());
             LOGGER.error("RTC Error: " + e.getMessage());
@@ -641,7 +652,7 @@ public class RTCCodeImporter {
 	    final String COMPONENT_NAME = importProps.getProperty("rtc.component.name", "COBOL");
 	    final String WORKSPACE_NAME = importProps.getProperty("rtc.workspace.name", "admin JKE Banking Dev Stream");
 	    final String DEFAULT_CS_OWNER = importProps.getProperty("rtc.default.changeset.owner", USERNAME);
-	    
+	    final String COBOL_PATH = importProps.getProperty("rtc.component.path.cobol");
 	    //final String STREAM_NAME = "Mainframe Code Dev Stream";
 	    //final String COMPONENT_NAME = "COBOL";
 	    //final String WORKSPACE_NAME = "admin Mainframe Code Dev Stream Workspace";
@@ -662,7 +673,7 @@ public class RTCCodeImporter {
 	    LOGGER.info("Started import process...\n");
 	    long importStart = System.currentTimeMillis();
 	    RTCCodeImporter rtcCodeImporter = new RTCCodeImporter(REPOSITORY_ADDRESS, USERNAME, PASSWORD, 
-	    		PROJECT_AREA, WORKSPACE_NAME, STREAM_NAME, COMPONENT_NAME, DEFAULT_CS_OWNER, 
+	    		PROJECT_AREA, WORKSPACE_NAME, STREAM_NAME, COMPONENT_NAME, COBOL_PATH, DEFAULT_CS_OWNER, 
 	    		SOURCE_FOLDER, WORKITEM_ID);
 	    
 	    start = System.currentTimeMillis();

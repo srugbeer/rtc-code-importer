@@ -53,7 +53,7 @@ public class ScmClient {
 	}
 
 	public IFileItem addFileToSourceControl(ITeamRepository teamRepository, File file, String fileName,
-			IWorkspaceConnection workspaceConnection, IComponentHandle componentHandle, IConfiguration config,
+			IWorkspaceConnection workspaceConnection, String path, IComponentHandle componentHandle, IConfiguration config,
 			String comment, Date creationDate, IContributorHandle creator, IWorkItem workItem, IProgressMonitor monitor) 
 					throws TeamRepositoryException, IOException {
 		
@@ -71,10 +71,11 @@ public class ScmClient {
 		
 		//Get Parent Folder
 		IFolderHandle parentFolderHandle = component.getRootFolder();
-		
-		String path = "Personal-Loans/zOSsrc";
+				
+		//Get Folder Path
 		IFolderHandle folderPath = parentFolderHandle;
-		IVersionableHandle folderVersionableHandle = config.resolvePath(parentFolderHandle, path.split("/"), monitor);
+		IVersionableHandle folderVersionableHandle = config.
+				resolvePath(parentFolderHandle, path.split("/"), monitor);
 		if (folderVersionableHandle instanceof IFolderHandle) {
 			folderPath = (IFolderHandle) folderVersionableHandle;
 		}
