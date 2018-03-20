@@ -34,6 +34,7 @@ import com.ibm.team.scm.common.IChangeSetHandle;
 import com.ibm.team.scm.common.IComponent;
 import com.ibm.team.scm.common.IComponentHandle;
 import com.ibm.team.scm.common.IFolderHandle;
+import com.ibm.team.scm.common.IVersionableHandle;
 import com.ibm.team.scm.common.IWorkspaceHandle;
 import com.ibm.team.scm.common.WorkspaceComparisonFlags;
 import com.ibm.team.scm.common.dto.IChangeHistorySyncReport;
@@ -52,7 +53,7 @@ public class ScmClient {
 	}
 
 	public IFileItem addFileToSourceControl(ITeamRepository teamRepository, File file, String fileName,
-			IWorkspaceConnection workspaceConnection, IComponentHandle componentHandle, IConfiguration config,
+			IWorkspaceConnection workspaceConnection, String path, IComponentHandle componentHandle, IConfiguration config,
 			String comment, Date creationDate, IContributorHandle creator, IWorkItem workItem, IProgressMonitor monitor) 
 					throws TeamRepositoryException, IOException {
 		
@@ -71,12 +72,20 @@ public class ScmClient {
 		//Get Parent Folder
 		IFolderHandle parentFolderHandle = component.getRootFolder();
 		
+		//Get Folder Path
+		IFolderHandle folderPath = parentFolderHandle;
+		IVersionableHandle folderVersionableHandle = config.
+				resolvePath(parentFolderHandle, path.split("/"), monitor);
+		if (folderVersionableHandle instanceof IFolderHandle) {
+			folderPath = (IFolderHandle) folderVersionableHandle;
+		}
+		
 		//Check for existing Source File
-		sourceFileItem = ScmUtils.getFile(fileName, parentFolderHandle, config, monitor);
+		sourceFileItem = ScmUtils.getFile(fileName, folderPath, config, monitor);
 		
 		if (sourceFileItem == null) {
 			//If the source file does not already exist, create a new item
-			sourceFileItem = ScmUtils.createFileItem(fileName, parentFolderHandle, creationDate);
+			sourceFileItem = ScmUtils.createFileItem(fileName, folderPath, creationDate);
 		}
 		
 		FileInputStream fileInputStream = new FileInputStream(file);
