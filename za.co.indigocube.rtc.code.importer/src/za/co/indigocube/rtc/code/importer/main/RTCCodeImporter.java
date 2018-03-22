@@ -652,7 +652,7 @@ public class RTCCodeImporter {
 	    final String COMPONENT_NAME = importProps.getProperty("rtc.component.name", "COBOL");
 	    final String WORKSPACE_NAME = importProps.getProperty("rtc.workspace.name", "admin JKE Banking Dev Stream");
 	    final String DEFAULT_CS_OWNER = importProps.getProperty("rtc.default.changeset.owner", USERNAME);
-	    final String COBOL_PATH = importProps.getProperty("rtc.component.path.cobol");
+	    final String ZPROJECT = importProps.getProperty("rtc.zproject.name");
 	    //final String STREAM_NAME = "Mainframe Code Dev Stream";
 	    //final String COMPONENT_NAME = "COBOL";
 	    //final String WORKSPACE_NAME = "admin Mainframe Code Dev Stream Workspace";
@@ -673,7 +673,7 @@ public class RTCCodeImporter {
 	    LOGGER.info("Started import process...\n");
 	    long importStart = System.currentTimeMillis();
 	    RTCCodeImporter rtcCodeImporter = new RTCCodeImporter(REPOSITORY_ADDRESS, USERNAME, PASSWORD, 
-	    		PROJECT_AREA, WORKSPACE_NAME, STREAM_NAME, COMPONENT_NAME, COBOL_PATH, DEFAULT_CS_OWNER, 
+	    		PROJECT_AREA, WORKSPACE_NAME, STREAM_NAME, COMPONENT_NAME, ZPROJECT, DEFAULT_CS_OWNER, 
 	    		SOURCE_FOLDER, WORKITEM_ID);
 	    
 	    start = System.currentTimeMillis();
