@@ -53,7 +53,7 @@ public class ScmClient {
 	}
 
 	public IFileItem addFileToSourceControl(ITeamRepository teamRepository, File file, String fileName,
-			IWorkspaceConnection workspaceConnection, String zProjectName, IComponentHandle componentHandle, IConfiguration config,
+			IWorkspaceConnection workspaceConnection, String path, IComponentHandle componentHandle, IConfiguration config,
 			String comment, Date creationDate, IContributorHandle creator, IWorkItem workItem, IProgressMonitor monitor) 
 					throws TeamRepositoryException, IOException {
 		
@@ -69,30 +69,13 @@ public class ScmClient {
 		IComponent component = (IComponent) teamRepository.itemManager().
 				fetchCompleteItem(componentHandle, IItemManager.REFRESH, monitor);
 		
-		//Remove trailing / from path if necessary
-		if (zProjectName.endsWith("/"))
-			zProjectName = zProjectName.substring(0, zProjectName.length() - 1);
-		
-		//Get File Extension
-		String fileExtension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
-		System.out.println("File Extension: " + fileExtension);
-		
-		switch (fileExtension) {
-			case "cob" :
-			case "cbl" : zProjectName = zProjectName.concat("/zOSsrc/COBOL");
-				break;
-			case "cpy" : zProjectName = zProjectName.concat("/zOSsrc/COPYBOOK");
-		}
-		
-		System.out.println("Path: " + zProjectName);
-		
 		//Get Parent Folder
 		IFolderHandle parentFolderHandle = component.getRootFolder();
 				
 		//Get Folder Path
 		IFolderHandle folderPath = parentFolderHandle;
 		IVersionableHandle folderVersionableHandle = config.
-				resolvePath(parentFolderHandle, zProjectName.split("/"), monitor);
+				resolvePath(parentFolderHandle, path.split("/"), monitor);
 		if (folderVersionableHandle instanceof IFolderHandle) {
 			folderPath = (IFolderHandle) folderVersionableHandle;
 		}

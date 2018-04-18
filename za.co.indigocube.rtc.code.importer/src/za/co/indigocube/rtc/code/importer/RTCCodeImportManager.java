@@ -26,6 +26,7 @@ import za.co.indigocube.rtc.code.importer.scm.attribute.ScmAttributeUtils;
 import za.co.indigocube.rtc.code.importer.source.FolderReader;
 import za.co.indigocube.rtc.code.importer.source.model.SourceFile;
 import za.co.indigocube.rtc.code.importer.source.model.SourceFileVersion;
+import za.co.indigocube.rtc.code.importer.source.model.SourceType;
 import za.co.indigocube.rtc.code.importer.workitem.WorkItemClient;
 import za.co.indigocube.rtc.code.importer.workitem.WorkItemUtils;
 
@@ -186,7 +187,7 @@ public class RTCCodeImportManager {
 	}
 
 	private IFileItem importSourceFileToRTC(SourceFile sourceFile, ITeamRepository teamRepository,
-			String sourceWorkspaceName, String targetStreamName, String componentName, String cobolPath, IProgressMonitor monitor) 
+			String sourceWorkspaceName, String targetStreamName, String componentName, String path, IProgressMonitor monitor) 
 					throws TeamRepositoryException, IOException, ParseException {
 		
 		IFileItem fileItem = null;
@@ -215,43 +216,17 @@ public class RTCCodeImportManager {
         IProjectArea projectArea = ScmUtils.getProjectArea(teamRepository, this.getProjectAreaName());
         
         IWorkItem workItem = null;
-	    
-	    //Find Work Item
-        /*if (this.getWorkItemId() != -1) {
-        	//Use Existing Work Item
-        	workItem = wiClient.findWorkItem(teamRepository, this.getWorkItemId(), monitor);
-        }
-        else {
-        	//Create new Work Item
-        	
-        	String workItemTypeId = "task";
-        	String devLineName = "Main Development";
-        	String summary = "Import " + sourceFile.getName();
-        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
-        	Timestamp currentTime = new Timestamp(System.currentTimeMillis());
-        	IContributor loggedinUser = teamRepository.loggedInContributor();
-        	
-        	IDevelopmentLine devLine = WorkItemUtils.findDevelopmentLine(teamRepository, projectArea, devLineName, monitor);
-    		IIterationHandle currentIteration = devLine.getCurrentIteration();
-        	
-        	workItem = wiClient.createWorkItem(teamRepository, projectArea, workItemTypeId, summary, rootCategory, 
-        			currentTime, loggedinUser, loggedinUser, currentIteration, monitor);
-        }*/
         
         //Get Source File Version History
-        //Map<Integer, SourceFileVersion> history = sourceFile.getHistory();
         TreeSet<SourceFileVersion> versionHistory = sourceFile.getVersionHistory();
         
         //for (int i = 0; i < history.size(); i++) {
         int version = 0;
-    	//LOGGER.info("================================================================");
         for (SourceFileVersion sourceFileVersion : versionHistory) {
-        	//SourceFileVersion sourceFileVersion = history.get(i);
         	String fileName = sourceFile.getName();
         	String filePath = sourceFile.getPath();
         	String versionIndex = sourceFileVersion.getVersionFileName();
         	String versionFilePath = filePath + "/" + versionIndex + "-" + fileName;
-        	//System.out.println("Version File Path: " + versionFilePath);
 	    	File versionFile = new File(versionFilePath);
 	    	LOGGER.info("File Version Path: " + versionFile.getAbsolutePath());
 	    	
@@ -264,16 +239,11 @@ public class RTCCodeImportManager {
 		    	Date creationDate = sourceFileVersion.getCreationDate();
 		    	String project = sourceFileVersion.getProject();
 		    	
-		    	//SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMddhhmmss");
-		    	
-		    	//int version = i;
 		    	String comment = "Imported: " + fileName + " version: " + (version + 1)
 		    			+ " Owner: " + createdBy + " Project: " + project;
 		    	//System.out.println(comment);
 		    	LOGGER.info(comment);
-		    	//Date date = dateFormat.parse(creationDate);
 		    	LOGGER.info("Creation Date: " + creationDate);
-		    	//System.out.println("Creation Date: " + creationDate);
 		    	
 		    	IContributor creator = null;
 	            try {
@@ -286,8 +256,6 @@ public class RTCCodeImportManager {
 	            				monitor);
 	            		LOGGER.warn(e.getMessage());
 	            		LOGGER.info("Using default user: " + creator.getName() + " (" + creator.getUserId() + ")");
-	            		//System.out.println(e.getMessage());
-	            		//System.out.println("Using default Admin User.");
 	            	}
 	            }
 	            
@@ -303,9 +271,8 @@ public class RTCCodeImportManager {
 		        	String devLineName = "Main Development";
 		        	String summary = project;
 		        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
-		        	//Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+
 		        	Timestamp creationTime = new Timestamp(creationDate.getTime());
-		        	//IContributor loggedinUser = teamRepository.loggedInContributor();
 		        	
 		        	IDevelopmentLine devLine = WorkItemUtils.findDevelopmentLine(teamRepository, projectArea, devLineName, monitor);
 		    		IIterationHandle currentIteration = devLine.getCurrentIteration();
@@ -316,11 +283,13 @@ public class RTCCodeImportManager {
 		        	this.getProjectMap().put(project, workItem.getId());
 	            }
 		    	//Commit File Version to Repository
+	            LOGGER.info("Committing file version to source control");
+	            LOGGER.info("Workspace path: " + path);
 		    	fileItem = scmClient.addFileToSourceControl(teamRepository, versionFile, fileName, sourceWorkspaceConnection, 
-		    			cobolPath, componentHandle, config, comment, creationDate, creator, workItem, monitor);
+		    			path, componentHandle, config, comment, creationDate, creator, workItem, monitor);
 		    	
 		    	//Deliver change to Target Stream
-		    	LOGGER.info("Delivering change set to Stream");
+		    	LOGGER.info("Delivering change set to stream");
 		    	//System.out.println("Delivering change set to Stream");
 		    	scmClient.deliverChangeSetsToStream(teamRepository, sourceWorkspaceConnection, targetStreamConnection, 
 		    			componentHandle, monitor);
@@ -332,10 +301,16 @@ public class RTCCodeImportManager {
 		    	LOGGER.info("Setting custom attributes");
 		    	//System.out.println("Setting custom attributes");
 		    	Map<String, String> attributes = sourceFile.getMetadata();
-		    	ScmAttributeUtils.setAttributes(versionable, attributes, ScmUtils.getScmService(teamRepository));
 		    	
-		    	ScmAttributeUtils.printAttributes(versionable, ScmUtils.getScmService(teamRepository), LOGGER);
+		    	try {
+		    		ScmAttributeUtils.setAttributes(versionable, attributes, ScmUtils.getScmService(teamRepository));
 		    	
+		    		ScmAttributeUtils.printAttributes(versionable, ScmUtils.getScmService(teamRepository), LOGGER);
+		    	}
+		    	catch (TeamRepositoryException e) {
+		    		LOGGER.error("Custom attributes are not defined in the project area");
+		    		LOGGER.warn("Custom attributes will not be set");
+		    	}
 		    	//Close work item
 		    	version++;
 		    	versionCount++;
@@ -348,14 +323,45 @@ public class RTCCodeImportManager {
 	
 	private ArrayList<IFileItem> importSourceFilesToRTC(ArrayList<SourceFile> sourceFiles, 
 			ITeamRepository teamRepository, String sourceWorkspaceName, String targetStreamName, 
-			String componentName, String cobolPath, IProgressMonitor monitor) 
+			String componentName, String path, IProgressMonitor monitor) 
 					throws TeamRepositoryException, IOException, ParseException {
 		
 		ArrayList<IFileItem> fileItems = new ArrayList<IFileItem>();
 		
 		for (SourceFile sourceFile : sourceFiles) {
+			String targetComponentName = componentName;
+			String targetPath = path;
+			
+			SourceType sourceType = sourceFile.getSourceType();
+			
+			switch (sourceType) {
+				case COBOL : 
+					targetComponentName = programComponentName;
+					targetPath = programzProjectName.concat("/zOSsrc/").concat(cobolFolderName);
+					break;
+				case COPYBOOK :
+					targetComponentName = copybookComponentName;
+					targetPath = copybookzProjectName.concat("/zOSsrc/").concat(copybookFolderName);
+					break;
+				case ASSEMBLER:
+					break;
+				case JCL:
+					break;
+				case LINK:
+					break;
+				case LOAD:
+					break;
+				case OTHER:
+					break;
+				case PRM:
+					break;
+				case REXX:
+					break;
+				default:
+					break;
+			}
 			IFileItem fileItem = importSourceFileToRTC(sourceFile, teamRepository, sourceWorkspaceName, 
-					targetStreamName, componentName, cobolPath, monitor);
+					targetStreamName, targetComponentName, targetPath, monitor);
 			fileItems.add(fileItem);
 		}
 		

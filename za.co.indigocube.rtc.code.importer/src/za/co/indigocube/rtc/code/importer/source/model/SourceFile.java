@@ -13,6 +13,7 @@ import java.util.TreeSet;
 public class SourceFile {
 	private String fName;
 	private String fPath;
+	private SourceType sourceType;
 	private Map<String, String> fMetadata;
 	private Map<Integer, SourceFileVersion> fHistory;
 	private TreeSet<SourceFileVersion> fVersionHistory;
@@ -26,11 +27,34 @@ public class SourceFile {
 	public SourceFile(String name, String path, Map<String, String> metadata,
 			TreeSet<SourceFileVersion> versionHistory) {
 		super();
-		this.setName(name);
-		this.setPath(path);
-		this.setMetadata(metadata);
-		this.setVersionHistory(versionHistory);
-		this.setNumberOfVersions(versionHistory.size());
+		setName(name);
+		setPath(path);
+		setMetadata(metadata);
+		setVersionHistory(versionHistory);
+		setNumberOfVersions(versionHistory.size());
+		String fileExtension = name.substring(name.lastIndexOf(".") + 1).toLowerCase();
+		switch (fileExtension) {
+			case "cob" :
+			case "cbl" : setSourceType(SourceType.COBOL);
+				break;
+			case "cpy" : setSourceType(SourceType.COPYBOOK);
+				break;
+			case "asm" : setSourceType(SourceType.ASSEMBLER);
+				break;
+			case "jcl" : setSourceType(SourceType.JCL);
+				break;
+			case "prm" : setSourceType(SourceType.PRM);
+				break;
+			case "lnk" :
+			case "link": setSourceType(SourceType.LINK);
+				break;
+			case "load": setSourceType(SourceType.LOAD);
+				break;
+			case "rex" :
+			case "rexx": setSourceType(SourceType.REXX);
+				break;
+			default : setSourceType(SourceType.OTHER);
+		}
 	}
 	/**
 	 * @param name
@@ -72,6 +96,18 @@ public class SourceFile {
 	 */
 	public void setPath(String path) {
 		this.fPath = path;
+	}
+	/**
+	 * @return the sourceType
+	 */
+	public SourceType getSourceType() {
+		return sourceType;
+	}
+	/**
+	 * @param sourceType the sourceType to set
+	 */
+	public void setSourceType(SourceType sourceType) {
+		this.sourceType = sourceType;
 	}
 	/**
 	 * @return the metadata
