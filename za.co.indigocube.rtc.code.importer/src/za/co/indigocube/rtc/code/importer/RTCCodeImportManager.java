@@ -282,39 +282,101 @@ public class RTCCodeImportManager {
 		        	//Add to project map
 		        	this.getProjectMap().put(project, workItem.getId());
 	            }
-		    	//Commit File Version to Repository
-	            LOGGER.info("Committing file version to source control");
-	            LOGGER.info("Workspace path: " + path);
-		    	fileItem = scmClient.addFileToSourceControl(teamRepository, versionFile, fileName, sourceWorkspaceConnection, 
-		    			path, componentHandle, config, comment, creationDate, creator, workItem, monitor);
-		    	
-		    	//Deliver change to Target Stream
-		    	LOGGER.info("Delivering change set to stream");
-		    	//System.out.println("Delivering change set to Stream");
-		    	scmClient.deliverChangeSetsToStream(teamRepository, sourceWorkspaceConnection, targetStreamConnection, 
-		    			componentHandle, monitor);
-		    	
-		    	//Get Versionable full state
-		    	IVersionable versionable = config.fetchCompleteItem(fileItem, monitor);
-		    	
-		    	//Set custom attributes
-		    	LOGGER.info("Setting custom attributes");
-		    	//System.out.println("Setting custom attributes");
-		    	Map<String, String> attributes = sourceFile.getMetadata();
-		    	
-		    	try {
-		    		ScmAttributeUtils.setAttributes(versionable, attributes, ScmUtils.getScmService(teamRepository));
-		    	
-		    		ScmAttributeUtils.printAttributes(versionable, ScmUtils.getScmService(teamRepository), LOGGER);
-		    	}
-		    	catch (TeamRepositoryException e) {
-		    		LOGGER.error("Custom attributes are not defined in the project area");
-		    		LOGGER.warn("Custom attributes will not be set");
-		    	}
-		    	//Close work item
-		    	version++;
-		    	versionCount++;
-		    	LOGGER.info("");
+	            
+	            try {
+			    	Map<String, String> attributes = sourceFile.getMetadata();
+			    	
+			    	//Set Language Definition
+			    	LOGGER.info("Setting RTC language definition");
+			    	
+			    	String languageDef = "";
+			    	
+			    	SourceType sourceType = sourceFile.getSourceType();
+			    	
+			    	if (sourceType.equals(SourceType.COPYBOOK)) {
+			    		languageDef = "COPYBOOK";
+			    	}
+			    	else {
+				    	String language = attributes.get("Language");
+				    	String db2 = attributes.get("DB2");
+				    	String ooCobol = attributes.get("OOCobol");
+				    	String apfAuth = attributes.get("APFAuth");
+				    	
+				    	switch (language) {
+				    		case "CBLE" : 
+				    			languageDef = "COBOL";
+				    			if (ooCobol.equals("Y"))
+				    				languageDef = "OOCOBOL";
+				    			break;
+				    		case "ASM" :
+				    			languageDef = "ASM";
+				    			if (apfAuth.equals("Y"))
+				    				languageDef = "AuthASM";
+				    		default :
+				    			break;
+				    	}
+		    			if (db2.equals("Y"))
+		    				languageDef = languageDef.concat("&DB2");
+			    	}
+	    			LOGGER.info("Language Definition is: " + languageDef);
+	    			String langDefUUID = "";
+	    			
+	    			switch (languageDef) {
+	    				case "COBOL" : 
+	    					langDefUUID = cobolLangDefUUID;
+	    					break;
+	    				case "OOCOBOL" : 
+	    					langDefUUID = ooCobolLangDefUUID;
+	    					break;
+	    				case "COBOL&DB2" : 
+	    					langDefUUID = cobolDb2LangDefUUID;
+	    					break;
+	    				case "COPYBOOK" : 
+	    					langDefUUID = copybookLangDefUUID;
+	    					break;
+	    			}
+	            	
+					//Commit File Version to Repository
+					LOGGER.info("Committing file version to source control");
+					LOGGER.info("Workspace path: " + path);
+					fileItem = scmClient.addFileToSourceControl(teamRepository, versionFile, fileName, 
+							sourceWorkspaceConnection, path, componentHandle, config, comment, creationDate, 
+							creator, workItem, RTCCodeImporterConstants.LANGUAGE_DEFINITION_USER_PROPERTY, 
+							langDefUUID, monitor);    			
+			    	
+			    	//Deliver change to Target Stream
+			    	LOGGER.info("Delivering change set to stream");
+			    	//System.out.println("Delivering change set to Stream");
+			    	scmClient.deliverChangeSetsToStream(teamRepository, sourceWorkspaceConnection, targetStreamConnection, 
+			    			componentHandle, monitor);
+			    	
+			    	//Get Versionable full state
+			    	IVersionable versionable = config.fetchCompleteItem(fileItem, monitor);
+			    	
+			    	//Set custom attributes
+			    	LOGGER.info("Setting custom attributes");
+			    	//System.out.println("Setting custom attributes");
+			    	
+			    	try {
+			    		ScmAttributeUtils.setAttributes(versionable, attributes, ScmUtils.getScmService(teamRepository));
+			    	
+			    		ScmAttributeUtils.printAttributes(versionable, ScmUtils.getScmService(teamRepository), LOGGER);
+			    	}
+			    	catch (TeamRepositoryException e) {
+			    		LOGGER.error("Custom attributes are not defined in the project area");
+			    		LOGGER.warn("Custom attributes will not be set");
+			    	}
+			    	
+			    	//Close work item
+			    	version++;
+			    	versionCount++;
+			    	LOGGER.info("");
+	            }
+	            catch (TeamRepositoryException e) {
+	            	LOGGER.error("An error occurred importing this version: " + e.getMessage());
+	            	LOGGER.warn("Skipping this version");
+	            	skippedVersionCount++;
+	            }
 	    	}
         }
 		

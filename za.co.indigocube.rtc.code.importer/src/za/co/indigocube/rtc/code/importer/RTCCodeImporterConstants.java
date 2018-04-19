@@ -42,6 +42,9 @@ public class RTCCodeImporterConstants {
     public static final String DEFAULT_JCL_ZFOLDER = "JCL";
     public static final String DEFAULT_PRM_ZFOLDER = "PRM";
     
+    /* Language Definition User Property */
+    public static final String LANGUAGE_DEFINITION_USER_PROPERTY = "team.enterprise.language.definition";
+    
     /* Default Properties File */
     public static final String DEFAULT_PROPERTIES_FILE = "resources/import.properties";
 }

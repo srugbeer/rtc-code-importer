@@ -34,6 +34,7 @@ import com.ibm.team.scm.common.IChangeSetHandle;
 import com.ibm.team.scm.common.IComponent;
 import com.ibm.team.scm.common.IComponentHandle;
 import com.ibm.team.scm.common.IFolderHandle;
+import com.ibm.team.scm.common.IVersionable;
 import com.ibm.team.scm.common.IVersionableHandle;
 import com.ibm.team.scm.common.IWorkspaceHandle;
 import com.ibm.team.scm.common.WorkspaceComparisonFlags;
@@ -53,8 +54,9 @@ public class ScmClient {
 	}
 
 	public IFileItem addFileToSourceControl(ITeamRepository teamRepository, File file, String fileName,
-			IWorkspaceConnection workspaceConnection, String path, IComponentHandle componentHandle, IConfiguration config,
-			String comment, Date creationDate, IContributorHandle creator, IWorkItem workItem, IProgressMonitor monitor) 
+			IWorkspaceConnection workspaceConnection, String path, IComponentHandle componentHandle, 
+			IConfiguration config, String comment, Date creationDate, IContributorHandle creator, 
+			IWorkItem workItem, String userProp, String userPropValue, IProgressMonitor monitor) 
 					throws TeamRepositoryException, IOException {
 		
 		IFileItem sourceFileItem = null;
@@ -103,6 +105,9 @@ public class ScmClient {
 					.getWorkingCopy();
 			sourceFileItemWorkingCopy.setContent(sourceFileContent);
 			sourceFileItemWorkingCopy.setFileTimestamp(creationDate);
+			
+			//Test: Setting User Props
+			sourceFileItemWorkingCopy.setUserProperty(userProp, userPropValue);
 
 			List<ISaveOp> configOps = Collections.singletonList(workspaceConnection.configurationOpFactory().
 					save(sourceFileItemWorkingCopy));
@@ -145,6 +150,13 @@ public class ScmClient {
 		IWorkItemHandle[] workItemHandles = {workItemHandle};
 				
 		return fileSystemWorkItemManager.createLink(workspaceHandle, changeSetHandle, workItemHandles, monitor);
+	}
+	
+	public void addUserProperty(IVersionable versionable, 
+			String propertyName, String propertyValue) {
+		
+		versionable.setUserProperty(propertyName, propertyValue);
+		
 	}
 	
 }
