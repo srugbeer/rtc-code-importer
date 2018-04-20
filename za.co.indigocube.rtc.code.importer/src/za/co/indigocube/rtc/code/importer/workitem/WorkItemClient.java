@@ -9,6 +9,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
 
 import za.co.indigocube.rtc.code.importer.workitem.WorkItemUtils.WorkItemInitialization;
 
+import com.ibm.team.links.client.ILinkManager;
+import com.ibm.team.links.common.ILink;
+import com.ibm.team.links.common.IReference;
 import com.ibm.team.process.common.IIterationHandle;
 import com.ibm.team.process.common.IProjectArea;
 import com.ibm.team.repository.client.ITeamRepository;
@@ -63,6 +66,18 @@ public class WorkItemClient {
 		workItem = auditableClient.resolveAuditable(handle, IWorkItem.FULL_PROFILE, null);
 		
 		return workItem;
+	}
+	
+	public void createWorkItemLink(ITeamRepository teamRepository, IWorkItem sourceWorkItem, 
+			IWorkItem targetWorkItem, String linkType, IProgressMonitor monitor) throws TeamRepositoryException {
+		
+		ILinkManager linkManager = WorkItemUtils.getLinkManager(teamRepository);
+		IReference sourceWorkItemRef =
+		          linkManager.referenceFactory().createReferenceToItem(sourceWorkItem);
+		IReference targetWorkItemRef = linkManager.referenceFactory().createReferenceToItem(targetWorkItem);
+		ILink newLink = linkManager.createLink(
+		          linkType, sourceWorkItemRef, targetWorkItemRef);
+		linkManager.saveLink(newLink, monitor);
 	}
 
 }

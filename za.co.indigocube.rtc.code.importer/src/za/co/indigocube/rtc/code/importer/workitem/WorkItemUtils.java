@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.ibm.team.foundation.common.text.XMLString;
+import com.ibm.team.links.client.ILinkManager;
 import com.ibm.team.process.common.IDevelopmentLine;
 import com.ibm.team.process.common.IDevelopmentLineHandle;
 import com.ibm.team.process.common.IIterationHandle;
@@ -40,6 +41,10 @@ public class WorkItemUtils {
 	
 	public static IAuditableClient getAuditableClient(ITeamRepository teamRepository) {
 		return (IAuditableClient) teamRepository.getClientLibrary(IAuditableClient.class);
+	}
+	
+	public static ILinkManager getLinkManager(ITeamRepository teamRepository) {
+		return (ILinkManager) teamRepository.getClientLibrary(ILinkManager.class);
 	}
 	
 	public static IDevelopmentLine findDevelopmentLine(ITeamRepository teamRepository, 
