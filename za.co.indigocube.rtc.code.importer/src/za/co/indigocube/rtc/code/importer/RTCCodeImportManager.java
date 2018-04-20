@@ -46,6 +46,7 @@ import com.ibm.team.scm.common.IVersionable;
 import com.ibm.team.workitem.common.IWorkItemCommon;
 import com.ibm.team.workitem.common.model.ICategory;
 import com.ibm.team.workitem.common.model.IWorkItem;
+import com.ibm.team.workitem.common.model.WorkItemLinkTypes;
 
 /**
  * @author Sudheer
@@ -75,10 +76,28 @@ public class RTCCodeImportManager {
 	private String asmFolderName;
 	private String jclFolderName;
 	private String prmFolderName;
+	
 	private String cobolLangDefUUID;
 	private String ooCobolLangDefUUID;
+	private String cobolIMSLangDefUUID;
+	private String ooCobolIMSLangDefUUID;
 	private String cobolDb2LangDefUUID;
+	private String ooCobolDb2LangDefUUID;
+	private String cobolIMSDb2LangDefUUID;
+	private String ooCobolIMSDb2LangDefUUID;
+	
+	private String asmLangDefUUID;
+	private String authAsmLangDefUUID;
+	private String asmIMSLangDefUUID;
+	private String authAsmIMSLangDefUUID;
+	private String asmDb2LangDefUUID;
+	private String authAsmDb2LangDefUUID;
+	private String asmIMSDb2LangDefUUID;
+	private String authAsmIMSDb2LangDefUUID;
+	
 	private String copybookLangDefUUID;
+	private String jclLangDefUUID;
+	private String prmLangDefUUID;
 	
 	/* Internal Counters */
 	private int fileCount;
@@ -157,7 +176,22 @@ public class RTCCodeImportManager {
 		
 		this.cobolLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_COBOL_UUID_PROP);
 		this.ooCobolLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_OOCOBOL_UUID_PROP);
+		this.cobolIMSLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_COBOLIMS_UUID_PROP);
+		this.ooCobolIMSLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_OOCOBOLIMS_UUID_PROP);
 		this.cobolDb2LangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_COBOLDB2_UUID_PROP);
+		this.ooCobolDb2LangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_OOCOBOLDB2_UUID_PROP);
+		this.cobolIMSDb2LangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_COBOLIMSDB2_UUID_PROP);
+		this.ooCobolIMSDb2LangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_OOCOBOLIMSDB2_UUID_PROP);
+		
+		this.asmLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_ASM_UUID_PROP);
+		this.authAsmLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_AuthASM_UUID_PROP);
+		this.asmIMSLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_ASMIMS_UUID_PROP);
+		this.authAsmIMSLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_AuthASMIMS_UUID_PROP);
+		this.asmDb2LangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_ASMDB2_UUID_PROP);
+		this.authAsmDb2LangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_AuthASMDB2_UUID_PROP);
+		this.asmIMSDb2LangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_ASMIMSDB2_UUID_PROP);
+		this.authAsmIMSDb2LangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_AuthASMIMSDB2_UUID_PROP);
+
 		this.copybookLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_COPYBOOK_UUID_PROP);
 	}
 	
@@ -184,6 +218,67 @@ public class RTCCodeImportManager {
 	    });
 	    repository.login(monitor);
 	    return repository;
+	}
+	
+	private String getLanguageDefinition(SourceFile sourceFile) {
+		
+		String languageDef = "";
+		
+		SourceType sourceType = sourceFile.getSourceType();
+		Map<String, String> metadata = sourceFile.getMetadata();
+		
+		if (sourceType.equals(SourceType.COPYBOOK)) {
+    		languageDef = "COPYBOOK";
+    	}
+    	else {
+	    	String language = metadata.get("Language");
+	    	String ims = metadata.get("IMS");
+	    	String db2 = metadata.get("DB2");
+	    	String ooCobol = metadata.get("OOCobol");
+	    	String apfAuth = metadata.get("APFAuth");
+	    	
+	    	switch (language) {
+	    		case "CBLE" : 
+	    			languageDef = "COBOL";
+	    			if (ooCobol.equals("Y"))
+	    				languageDef = "OOCOBOL";
+	    			break;
+	    		case "ASM" :
+	    			languageDef = "ASM";
+	    			if (apfAuth.equals("Y"))
+	    				languageDef = "AuthASM";
+	    		default :
+	    			break;
+	    	}
+	    	if (ims.equals("Y"))
+	    		languageDef = languageDef.concat("&IMS");
+			if (db2.equals("Y"))
+				languageDef = languageDef.concat("&DB2");
+    	}
+		return languageDef;
+	}
+	
+	private String getLanguageDefinitionUUID(String languageDef) {
+		String langDefUUID = "";
+		
+		switch (languageDef) {
+			case "COBOL" : 
+				langDefUUID = cobolLangDefUUID;
+				break;
+			case "OOCOBOL" : 
+				langDefUUID = ooCobolLangDefUUID;
+				break;
+			case "COBOL&IMS" :
+				langDefUUID = cobolIMSLangDefUUID;
+				break;
+			case "COBOL&DB2" : 
+				langDefUUID = cobolDb2LangDefUUID;
+				break;
+			case "COPYBOOK" : 
+				langDefUUID = copybookLangDefUUID;
+				break;
+		}
+		return langDefUUID;
 	}
 
 	private IFileItem importSourceFileToRTC(SourceFile sourceFile, ITeamRepository teamRepository,
@@ -215,7 +310,9 @@ public class RTCCodeImportManager {
         //Get Project Area
         IProjectArea projectArea = ScmUtils.getProjectArea(teamRepository, this.getProjectAreaName());
         
-        IWorkItem workItem = null;
+        //Project and Change Set Work Items
+        IWorkItem projectWorkItem = null;
+        IWorkItem changeSetWorkItem = null;
         
         //Get Source File Version History
         TreeSet<SourceFileVersion> versionHistory = sourceFile.getVersionHistory();
@@ -264,10 +361,10 @@ public class RTCCodeImportManager {
 	            //First check if Project Work Item already exists
 	            if (this.getProjectMap().containsKey(project)) {
 	            	int workitemId = this.getProjectMap().get(project);
-	            	workItem = wiClient.findWorkItem(teamRepository, workitemId, monitor);
+	            	projectWorkItem = wiClient.findWorkItem(teamRepository, workitemId, monitor);
 	            }
 	            else {
-		        	String workItemTypeId = "task";
+		        	String workItemTypeId = "com.ibm.team.apt.workItemType.story";
 		        	String devLineName = "Main Development";
 		        	String summary = project;
 		        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
@@ -277,78 +374,57 @@ public class RTCCodeImportManager {
 		        	IDevelopmentLine devLine = WorkItemUtils.findDevelopmentLine(teamRepository, projectArea, devLineName, monitor);
 		    		IIterationHandle currentIteration = devLine.getCurrentIteration();
 		        	
-		        	workItem = wiClient.createWorkItem(teamRepository, projectArea, workItemTypeId, summary, rootCategory, 
+		        	projectWorkItem = wiClient.createWorkItem(teamRepository, projectArea, workItemTypeId, summary, rootCategory, 
 		        			creationTime, creator, creator, currentIteration, monitor);
 		        	//Add to project map
-		        	this.getProjectMap().put(project, workItem.getId());
+		        	this.getProjectMap().put(project, projectWorkItem.getId());
 	            }
 	            
 	            try {
-			    	Map<String, String> attributes = sourceFile.getMetadata();
-			    	
+			    	//Map<String, String> metadata = sourceFile.getMetadata();
+			    				    	
 			    	//Set Language Definition
 			    	LOGGER.info("Setting RTC language definition");
 			    	
-			    	String languageDef = "";
-			    	
-			    	SourceType sourceType = sourceFile.getSourceType();
-			    	
-			    	if (sourceType.equals(SourceType.COPYBOOK)) {
-			    		languageDef = "COPYBOOK";
-			    	}
-			    	else {
-				    	String language = attributes.get("Language");
-				    	String db2 = attributes.get("DB2");
-				    	String ooCobol = attributes.get("OOCobol");
-				    	String apfAuth = attributes.get("APFAuth");
-				    	
-				    	switch (language) {
-				    		case "CBLE" : 
-				    			languageDef = "COBOL";
-				    			if (ooCobol.equals("Y"))
-				    				languageDef = "OOCOBOL";
-				    			break;
-				    		case "ASM" :
-				    			languageDef = "ASM";
-				    			if (apfAuth.equals("Y"))
-				    				languageDef = "AuthASM";
-				    		default :
-				    			break;
-				    	}
-		    			if (db2.equals("Y"))
-		    				languageDef = languageDef.concat("&DB2");
-			    	}
+			    	//Get Language Definition for Source File
+			    	String languageDef = getLanguageDefinition(sourceFile);
+
 	    			LOGGER.info("Language Definition is: " + languageDef);
-	    			String langDefUUID = "";
 	    			
-	    			switch (languageDef) {
-	    				case "COBOL" : 
-	    					langDefUUID = cobolLangDefUUID;
-	    					break;
-	    				case "OOCOBOL" : 
-	    					langDefUUID = ooCobolLangDefUUID;
-	    					break;
-	    				case "COBOL&DB2" : 
-	    					langDefUUID = cobolDb2LangDefUUID;
-	    					break;
-	    				case "COPYBOOK" : 
-	    					langDefUUID = copybookLangDefUUID;
-	    					break;
-	    			}
+	    			//Get Language Definition UUID
+	    			String langDefUUID = getLanguageDefinitionUUID(languageDef);
+	    			
+	    			//Create Work Item for Change Set
+		        	String workItemTypeId = "task";
+		        	String devLineName = "Main Development";
+		        	String summary = comment;
+		        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
+
+		        	Timestamp creationTime = new Timestamp(creationDate.getTime());
+		        	
+		        	IDevelopmentLine devLine = WorkItemUtils.findDevelopmentLine(teamRepository, projectArea, devLineName, monitor);
+		    		IIterationHandle currentIteration = devLine.getCurrentIteration();
+		        	
+		        	changeSetWorkItem = wiClient.createWorkItem(teamRepository, projectArea, workItemTypeId, summary, rootCategory, 
+		        			creationTime, creator, creator, currentIteration, monitor);
+		        	
+		        	//Link Change Set Work Item to Project Work Item
+		        	String linkType = WorkItemLinkTypes.PARENT_WORK_ITEM;
+		        	wiClient.createWorkItemLink(teamRepository, changeSetWorkItem, projectWorkItem, linkType, monitor);
 	            	
 					//Commit File Version to Repository
 					LOGGER.info("Committing file version to source control");
 					LOGGER.info("Workspace path: " + path);
 					fileItem = scmClient.addFileToSourceControl(teamRepository, versionFile, fileName, 
 							sourceWorkspaceConnection, path, componentHandle, config, comment, creationDate, 
-							creator, workItem, RTCCodeImporterConstants.LANGUAGE_DEFINITION_USER_PROPERTY, 
+							creator, changeSetWorkItem, RTCCodeImporterConstants.LANGUAGE_DEFINITION_USER_PROPERTY, 
 							langDefUUID, monitor);    			
 			    	
 			    	//Deliver change to Target Stream
 			    	LOGGER.info("Delivering change set to stream");
 			    	//System.out.println("Delivering change set to Stream");
-			    	scmClient.deliverChangeSetsToStream(teamRepository, sourceWorkspaceConnection, targetStreamConnection, 
-			    			componentHandle, monitor);
+			    	scmClient.deliverChangeSetsToStream(teamRepository, sourceWorkspaceConnection, 
+			    			targetStreamConnection, componentHandle, monitor);
 			    	
 			    	//Get Versionable full state
 			    	IVersionable versionable = config.fetchCompleteItem(fileItem, monitor);
@@ -358,9 +434,11 @@ public class RTCCodeImportManager {
 			    	//System.out.println("Setting custom attributes");
 			    	
 			    	try {
-			    		ScmAttributeUtils.setAttributes(versionable, attributes, ScmUtils.getScmService(teamRepository));
+			    		ScmAttributeUtils.setAttributes(versionable, sourceFile.getMetadata(), 
+			    				ScmUtils.getScmService(teamRepository));
 			    	
-			    		ScmAttributeUtils.printAttributes(versionable, ScmUtils.getScmService(teamRepository), LOGGER);
+			    		ScmAttributeUtils.printAttributes(versionable, 
+			    				ScmUtils.getScmService(teamRepository), LOGGER);
 			    	}
 			    	catch (TeamRepositoryException e) {
 			    		LOGGER.error("Custom attributes are not defined in the project area");
@@ -772,6 +850,34 @@ public class RTCCodeImportManager {
 	}
 
 	/**
+	 * @return the cobolIMSLangDefUUID
+	 */
+	public String getCobolIMSLangDefUUID() {
+		return cobolIMSLangDefUUID;
+	}
+
+	/**
+	 * @param cobolIMSLangDefUUID the cobolIMSLangDefUUID to set
+	 */
+	public void setCobolIMSLangDefUUID(String cobolIMSLangDefUUID) {
+		this.cobolIMSLangDefUUID = cobolIMSLangDefUUID;
+	}
+
+	/**
+	 * @return the ooCobolIMSLangDefUUID
+	 */
+	public String getOoCobolIMSLangDefUUID() {
+		return ooCobolIMSLangDefUUID;
+	}
+
+	/**
+	 * @param ooCobolIMSLangDefUUID the ooCobolIMSLangDefUUID to set
+	 */
+	public void setOoCobolIMSLangDefUUID(String ooCobolIMSLangDefUUID) {
+		this.ooCobolIMSLangDefUUID = ooCobolIMSLangDefUUID;
+	}
+
+	/**
 	 * @return the cobolDb2LangDefUUID
 	 */
 	public String getCobolDb2LangDefUUID() {
@@ -786,6 +892,160 @@ public class RTCCodeImportManager {
 	}
 
 	/**
+	 * @return the ooCobolDb2LangDefUUID
+	 */
+	public String getOoCobolDb2LangDefUUID() {
+		return ooCobolDb2LangDefUUID;
+	}
+
+	/**
+	 * @param ooCobolDb2LangDefUUID the ooCobolDb2LangDefUUID to set
+	 */
+	public void setOoCobolDb2LangDefUUID(String ooCobolDb2LangDefUUID) {
+		this.ooCobolDb2LangDefUUID = ooCobolDb2LangDefUUID;
+	}
+
+	/**
+	 * @return the cobolIMSDb2LangDefUUID
+	 */
+	public String getCobolIMSDb2LangDefUUID() {
+		return cobolIMSDb2LangDefUUID;
+	}
+
+	/**
+	 * @param cobolIMSDb2LangDefUUID the cobolIMSDb2LangDefUUID to set
+	 */
+	public void setCobolIMSDb2LangDefUUID(String cobolIMSDb2LangDefUUID) {
+		this.cobolIMSDb2LangDefUUID = cobolIMSDb2LangDefUUID;
+	}
+
+	/**
+	 * @return the ooCobolIMSDb2LangDefUUID
+	 */
+	public String getOoCobolIMSDb2LangDefUUID() {
+		return ooCobolIMSDb2LangDefUUID;
+	}
+
+	/**
+	 * @param ooCobolIMSDb2LangDefUUID the ooCobolIMSDb2LangDefUUID to set
+	 */
+	public void setOoCobolIMSDb2LangDefUUID(String ooCobolIMSDb2LangDefUUID) {
+		this.ooCobolIMSDb2LangDefUUID = ooCobolIMSDb2LangDefUUID;
+	}
+
+	/**
+	 * @return the asmLangDefUUID
+	 */
+	public String getAsmLangDefUUID() {
+		return asmLangDefUUID;
+	}
+
+	/**
+	 * @param asmLangDefUUID the asmLangDefUUID to set
+	 */
+	public void setAsmLangDefUUID(String asmLangDefUUID) {
+		this.asmLangDefUUID = asmLangDefUUID;
+	}
+
+	/**
+	 * @return the authAsmLangDefUUID
+	 */
+	public String getAuthAsmLangDefUUID() {
+		return authAsmLangDefUUID;
+	}
+
+	/**
+	 * @param authAsmLangDefUUID the authAsmLangDefUUID to set
+	 */
+	public void setAuthAsmLangDefUUID(String authAsmLangDefUUID) {
+		this.authAsmLangDefUUID = authAsmLangDefUUID;
+	}
+
+	/**
+	 * @return the asmIMSLangDefUUID
+	 */
+	public String getAsmIMSLangDefUUID() {
+		return asmIMSLangDefUUID;
+	}
+
+	/**
+	 * @param asmIMSLangDefUUID the asmIMSLangDefUUID to set
+	 */
+	public void setAsmIMSLangDefUUID(String asmIMSLangDefUUID) {
+		this.asmIMSLangDefUUID = asmIMSLangDefUUID;
+	}
+
+	/**
+	 * @return the authAsmIMSLangDefUUID
+	 */
+	public String getAuthAsmIMSLangDefUUID() {
+		return authAsmIMSLangDefUUID;
+	}
+
+	/**
+	 * @param authAsmIMSLangDefUUID the authAsmIMSLangDefUUID to set
+	 */
+	public void setAuthAsmIMSLangDefUUID(String authAsmIMSLangDefUUID) {
+		this.authAsmIMSLangDefUUID = authAsmIMSLangDefUUID;
+	}
+
+	/**
+	 * @return the asmDb2LangDefUUID
+	 */
+	public String getAsmDb2LangDefUUID() {
+		return asmDb2LangDefUUID;
+	}
+
+	/**
+	 * @param asmDb2LangDefUUID the asmDb2LangDefUUID to set
+	 */
+	public void setAsmDb2LangDefUUID(String asmDb2LangDefUUID) {
+		this.asmDb2LangDefUUID = asmDb2LangDefUUID;
+	}
+
+	/**
+	 * @return the authAsmDb2LangDefUUID
+	 */
+	public String getAuthAsmDb2LangDefUUID() {
+		return authAsmDb2LangDefUUID;
+	}
+
+	/**
+	 * @param authAsmDb2LangDefUUID the authAsmDb2LangDefUUID to set
+	 */
+	public void setAuthAsmDb2LangDefUUID(String authAsmDb2LangDefUUID) {
+		this.authAsmDb2LangDefUUID = authAsmDb2LangDefUUID;
+	}
+
+	/**
+	 * @return the asmIMSDb2LangDefUUID
+	 */
+	public String getAsmIMSDb2LangDefUUID() {
+		return asmIMSDb2LangDefUUID;
+	}
+
+	/**
+	 * @param asmIMSDb2LangDefUUID the asmIMSDb2LangDefUUID to set
+	 */
+	public void setAsmIMSDb2LangDefUUID(String asmIMSDb2LangDefUUID) {
+		this.asmIMSDb2LangDefUUID = asmIMSDb2LangDefUUID;
+	}
+
+	/**
+	 * @return the authAsmIMSDb2LangDefUUID
+	 */
+	public String getAuthAsmIMSDb2LangDefUUID() {
+		return authAsmIMSDb2LangDefUUID;
+	}
+
+	/**
+	 * @param authAsmIMSDb2LangDefUUID the authAsmIMSDb2LangDefUUID to set
+	 */
+	public void setAuthAsmIMSDb2LangDefUUID(String authAsmIMSDb2LangDefUUID) {
+		this.authAsmIMSDb2LangDefUUID = authAsmIMSDb2LangDefUUID;
+	}
+
+	/**
 	 * @return the copybookLangDefUUID
 	 */
 	public String getCopybookLangDefUUID() {
@@ -797,6 +1057,34 @@ public class RTCCodeImportManager {
 	 */
 	public void setCopybookLangDefUUID(String copybookLangDefUUID) {
 		this.copybookLangDefUUID = copybookLangDefUUID;
+	}
+
+	/**
+	 * @return the jclLangDefUUID
+	 */
+	public String getJclLangDefUUID() {
+		return jclLangDefUUID;
+	}
+
+	/**
+	 * @param jclLangDefUUID the jclLangDefUUID to set
+	 */
+	public void setJclLangDefUUID(String jclLangDefUUID) {
+		this.jclLangDefUUID = jclLangDefUUID;
+	}
+
+	/**
+	 * @return the prmLangDefUUID
+	 */
+	public String getPrmLangDefUUID() {
+		return prmLangDefUUID;
+	}
+
+	/**
+	 * @param prmLangDefUUID the prmLangDefUUID to set
+	 */
+	public void setPrmLangDefUUID(String prmLangDefUUID) {
+		this.prmLangDefUUID = prmLangDefUUID;
 	}
 
 	/**
@@ -853,6 +1141,20 @@ public class RTCCodeImportManager {
 	 */
 	public void setSkippedVersionCount(int skippedVersionCount) {
 		this.skippedVersionCount = skippedVersionCount;
+	}
+
+	/**
+	 * @return the defaultProperties
+	 */
+	public Properties getDefaultProperties() {
+		return defaultProperties;
+	}
+
+	/**
+	 * @param defaultProperties the defaultProperties to set
+	 */
+	public void setDefaultProperties(Properties defaultProperties) {
+		this.defaultProperties = defaultProperties;
 	}
 
 	/**

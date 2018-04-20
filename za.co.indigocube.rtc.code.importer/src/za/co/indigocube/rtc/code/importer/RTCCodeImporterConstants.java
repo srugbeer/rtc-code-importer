@@ -10,6 +10,8 @@ package za.co.indigocube.rtc.code.importer;
 public class RTCCodeImporterConstants {
 	
 	/* Property Name Constants */
+	
+	//RTC Repository Properties
 	public static final String RTC_REPO_URL_PROP = "rtc.repo.url";
 	public static final String RTC_REPO_USERNAME_PROP = "rtc.repo.username";
 	public static final String RTC_REPO_PASSWORD_PROP = "rtc.repo.password";
@@ -22,17 +24,35 @@ public class RTCCodeImporterConstants {
     public static final String RTC_CPY_ZPROJECT_NAME_PROP = "rtc.cpy.zproject.name";
     public static final String RTC_DEFAULT_CS_OWNER_PROP = "rtc.default.changeset.owner";
     
+    //RTC Enterprise Extensions Language Definition Properties
     public static final String RTCZ_LANGDEFS_COBOL_UUID_PROP = "rtcz.langdefs.COBOL.uuid";
     public static final String RTCZ_LANGDEFS_OOCOBOL_UUID_PROP = "rtcz.langdefs.OOCOBOL.uuid";
+    public static final String RTCZ_LANGDEFS_COBOLIMS_UUID_PROP = "rtcz.langdefs.COBOL&IMS.uuid";
+    public static final String RTCZ_LANGDEFS_OOCOBOLIMS_UUID_PROP = "rtcz.langdefs.OOCOBOL&IMS.uuid";    
     public static final String RTCZ_LANGDEFS_COBOLDB2_UUID_PROP = "rtcz.langdefs.COBOL&DB2.uuid";
     public static final String RTCZ_LANGDEFS_OOCOBOLDB2_UUID_PROP = "rtcz.langdefs.OOCOBOL&DB2.uuid";
+    public static final String RTCZ_LANGDEFS_COBOLIMSDB2_UUID_PROP = "rtcz.langdefs.COBOL&IMS&DB2.uuid";
+    public static final String RTCZ_LANGDEFS_OOCOBOLIMSDB2_UUID_PROP = "rtcz.langdefs.OOCOBOL&IMS&DB2.uuid";
+    public static final String RTCZ_LANGDEFS_ASM_UUID_PROP = "rtcz.langdefs.ASM.uuid";
+    public static final String RTCZ_LANGDEFS_AuthASM_UUID_PROP = "rtcz.langdefs.AuthASM.uuid";
+    public static final String RTCZ_LANGDEFS_ASMIMS_UUID_PROP = "rtcz.langdefs.ASM&IMS.uuid";
+    public static final String RTCZ_LANGDEFS_AuthASMIMS_UUID_PROP = "rtcz.langdefs.AuthASM&IMS.uuid";
+    public static final String RTCZ_LANGDEFS_ASMDB2_UUID_PROP = "rtcz.langdefs.ASM&DB2.uuid";
+    public static final String RTCZ_LANGDEFS_AuthASMDB2_UUID_PROP = "rtcz.langdefs.AuthASM&DB2.uuid";
+    public static final String RTCZ_LANGDEFS_ASMIMSDB2_UUID_PROP = "rtcz.langdefs.ASM&IMS&DB2.uuid";
+    public static final String RTCZ_LANGDEFS_AuthASMIMSDB2_UUID_PROP = "rtcz.langdefs.AuthASM&IMS&DB2.uuid";
     public static final String RTCZ_LANGDEFS_COPYBOOK_UUID_PROP = "rtcz.langdefs.COPYBOOK.uuid";
+    public static final String RTCZ_LANGDEFS_PRM_UUID_PROP = "rtcz.langdefs.PRM.uuid";
+    public static final String RTCZ_LANGDEFS_JCL_UUID_PROP = "rtcz.langdefs.JCL.uuid";
+    
+    //RTC Enterprise Extensions zFolder Properties
     public static final String RTCZ_ZFOLDER_COBOL_PROP = "rtcz.zfolder.cobol";
     public static final String RTCZ_ZFOLDER_COPYBOOK_PROP = "rtcz.zfolder.copybook";
     public static final String RTCZ_ZFOLDER_ASM_PROP = "rtcz.zfolder.asm";
     public static final String RTCZ_ZFOLDER_JCL_PROP = "rtcz.zfolder.jcl";
     public static final String RTCZ_ZFOLDER_PRM_PROP = "rtcz.zfolder.prm";
     
+    //Source Folder Property
     public static final String SOURCE_FOLDER_PROP = "source.folder";
     
     /* zFolder Constants */
