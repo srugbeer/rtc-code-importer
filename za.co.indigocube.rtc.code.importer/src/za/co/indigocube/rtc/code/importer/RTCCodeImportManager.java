@@ -250,9 +250,9 @@ public class RTCCodeImportManager {
 	    		default :
 	    			break;
 	    	}
-	    	if (ims.equals("Y"))
+	    	if (ims != null && ims.equals("Y"))
 	    		languageDef = languageDef.concat("&IMS");
-			if (db2.equals("Y"))
+			if (db2 != null && db2.equals("Y"))
 				languageDef = languageDef.concat("&DB2");
     	}
 		return languageDef;
@@ -271,8 +271,44 @@ public class RTCCodeImportManager {
 			case "COBOL&IMS" :
 				langDefUUID = cobolIMSLangDefUUID;
 				break;
+			case "OOCOBOL&IMS" :
+				langDefUUID = ooCobolIMSLangDefUUID;
+				break;
 			case "COBOL&DB2" : 
 				langDefUUID = cobolDb2LangDefUUID;
+				break;
+			case "OOCOBOL&DB2" :
+				langDefUUID = ooCobolDb2LangDefUUID;
+				break;
+			case "COBOL&IMS&DB2" :
+				langDefUUID = cobolIMSDb2LangDefUUID;
+				break;
+			case "OOCOBOL&IMS&DB2" :
+				langDefUUID = ooCobolIMSDb2LangDefUUID;
+				break;				
+			case "ASM" : 
+				langDefUUID = asmLangDefUUID;
+				break;
+			case "AuthASM" : 
+				langDefUUID = authAsmLangDefUUID;
+				break;
+			case "ASM&IMS" :
+				langDefUUID = asmIMSLangDefUUID;
+				break;
+			case "AuthASM&IMS" :
+				langDefUUID = authAsmIMSLangDefUUID;
+				break;
+			case "ASM&DB2" : 
+				langDefUUID = asmDb2LangDefUUID;
+				break;
+			case "AuthASM&DB2" :
+				langDefUUID = authAsmDb2LangDefUUID;
+				break;
+			case "ASM&IMS&DB2" :
+				langDefUUID = asmIMSDb2LangDefUUID;
+				break;
+			case "AuthASM&IMS&DB2" :
+				langDefUUID = authAsmIMSDb2LangDefUUID;
 				break;
 			case "COPYBOOK" : 
 				langDefUUID = copybookLangDefUUID;
@@ -484,8 +520,12 @@ public class RTCCodeImportManager {
 					targetPath = copybookzProjectName.concat("/zOSsrc/").concat(copybookFolderName);
 					break;
 				case ASSEMBLER:
+					targetComponentName = programComponentName;
+					targetPath = programzProjectName.concat("/zOSsrc/").concat(asmFolderName);
 					break;
 				case JCL:
+					targetComponentName = programComponentName;
+					targetPath = programzProjectName.concat("/zOSsrc/").concat(jclFolderName);
 					break;
 				case LINK:
 					break;
@@ -494,6 +534,8 @@ public class RTCCodeImportManager {
 				case OTHER:
 					break;
 				case PRM:
+					targetComponentName = programComponentName;
+					targetPath = programzProjectName.concat("/zOSsrc/").concat(prmFolderName);
 					break;
 				case REXX:
 					break;
