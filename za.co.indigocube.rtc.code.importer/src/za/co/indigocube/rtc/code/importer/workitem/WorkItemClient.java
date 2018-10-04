@@ -19,7 +19,6 @@ import com.ibm.team.repository.common.IContributorHandle;
 import com.ibm.team.repository.common.TeamRepositoryException;
 import com.ibm.team.workitem.client.IAuditableClient;
 import com.ibm.team.workitem.common.IWorkItemCommon;
-import com.ibm.team.workitem.common.internal.model.WorkItem;
 import com.ibm.team.workitem.common.model.ICategory;
 import com.ibm.team.workitem.common.model.IWorkItem;
 import com.ibm.team.workitem.common.model.IWorkItemHandle;
@@ -41,7 +40,7 @@ public class WorkItemClient {
 		IWorkItem workItem = null;
 		
 		IWorkItemCommon wiCommon = WorkItemUtils.getWorkItemCommon(teamRepository);
-		workItem = wiCommon.findWorkItemById(workItemId, WorkItem.FULL_PROFILE, monitor);
+		workItem = wiCommon.findWorkItemById(workItemId, IWorkItem.FULL_PROFILE, monitor);
 		
 		return workItem;
 	}

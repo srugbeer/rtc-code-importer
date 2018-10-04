@@ -97,5 +97,24 @@ public class WorkItemUtils {
 			workItem.setTarget(fIteration);
 		}
 	}
+	
+	static class WorkItemSetWorkflowAction extends WorkItemOperation {
+	    private String fWorkFlowAction;
+
+	    public WorkItemSetWorkflowAction(String workFlowAction) {
+	        super("Modifying Work Item State", IWorkItem.FULL_PROFILE);
+	        fWorkFlowAction = workFlowAction;
+	    }
+
+	    @Override
+	    protected void execute(WorkItemWorkingCopy workingCopy,
+	            IProgressMonitor monitor) throws TeamRepositoryException {
+	        workingCopy.setWorkflowAction(fWorkFlowAction);
+	    }
+
+	    public void setfWorkFlowAtion(String fWorkFlowAction) {
+	        this.fWorkFlowAction = fWorkFlowAction;
+	    }		
+	}
 
 }
