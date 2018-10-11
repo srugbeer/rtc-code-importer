@@ -18,10 +18,11 @@ public class MainframeSourceFileFilter implements FileFilter {
 	@Override
 	public boolean accept(File file) {
 		
-		return ((new AssemblerFileFilter()).accept(file) ||
-				(new CobolFileFilter().accept(file) ||
-				(new CopybookFileFilter().accept(file) ||
-				(new JclFileFilter().accept(file)))));
+		return ((new AssemblerFileFilter()).accept(file)) ||
+				(new CobolFileFilter().accept(file)) ||
+				(new CopybookFileFilter().accept(file)) ||
+				(new JclFileFilter().accept(file)) ||
+				(new PrmFileFilter().accept(file));
 		
 //		if (pathname.isFile() && 
 //				(pathname.getName().endsWith(".cbl") ||

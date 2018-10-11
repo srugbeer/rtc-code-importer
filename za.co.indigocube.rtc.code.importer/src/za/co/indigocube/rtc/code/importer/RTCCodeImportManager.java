@@ -193,6 +193,8 @@ public class RTCCodeImportManager {
 		this.authAsmIMSDb2LangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_AuthASMIMSDB2_UUID_PROP);
 
 		this.copybookLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_COPYBOOK_UUID_PROP);
+		this.prmLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_ZFOLDER_PRM_PROP);
+		this.jclLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_ZFOLDER_JCL_PROP);
 	}
 	
 	private ArrayList<SourceFile> getSourceFileList() {
@@ -226,6 +228,37 @@ public class RTCCodeImportManager {
 		
 		SourceType sourceType = sourceFile.getSourceType();
 		Map<String, String> metadata = sourceFile.getMetadata();
+		String ims = metadata.get("IMS");
+    	String db2 = metadata.get("DB2");
+		
+		switch (sourceType) {
+			case COPYBOOK :
+				languageDef = "COPYBOOK";
+				break;
+			case PRM :
+				languageDef = "PRM";
+				break;
+			case JCL :
+				languageDef = "JCL";
+				break;
+			case REXX :
+				languageDef = "REXX";
+				break;
+			case COBOL :
+				String ooCobol = metadata.get("OOCobol");
+				languageDef = ooCobol.equals("Y") ? "OOCOBOL" : "COBOL";
+				break;
+			case ASSEMBLER :
+				String apfAuth = metadata.get("APFAuth");
+				languageDef = apfAuth.equals("Y") ? "AuthASM" : "ASM";
+				break;
+			default :
+				break;
+		}
+		languageDef = languageDef.concat((ims != null && ims.equals("Y")) ? "&IMS" : "");
+		languageDef = languageDef.concat((db2 != null && db2.equals("Y")) ? "&DB2" : "");
+		/*SourceType sourceType = sourceFile.getSourceType();
+		Map<String, String> metadata = sourceFile.getMetadata();
 		
 		if (sourceType.equals(SourceType.COPYBOOK)) {
     		languageDef = "COPYBOOK";
@@ -254,7 +287,7 @@ public class RTCCodeImportManager {
 	    		languageDef = languageDef.concat("&IMS");
 			if (db2 != null && db2.equals("Y"))
 				languageDef = languageDef.concat("&DB2");
-    	}
+    	}*/
 		return languageDef;
 	}
 	
@@ -312,6 +345,12 @@ public class RTCCodeImportManager {
 				break;
 			case "COPYBOOK" : 
 				langDefUUID = copybookLangDefUUID;
+				break;
+			case "PRM" :
+				langDefUUID = prmLangDefUUID;
+				break;
+			case "JCL" :
+				langDefUUID = jclLangDefUUID;
 				break;
 		}
 		return langDefUUID;

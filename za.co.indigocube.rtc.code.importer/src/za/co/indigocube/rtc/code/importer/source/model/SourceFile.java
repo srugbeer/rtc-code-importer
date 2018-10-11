@@ -13,7 +13,7 @@ import java.util.TreeSet;
 public class SourceFile {
 	private String fName;
 	private String fPath;
-	private SourceType sourceType;
+	private SourceType fSourceType;
 	private Map<String, String> fMetadata;
 	private Map<Integer, SourceFileVersion> fHistory;
 	private TreeSet<SourceFileVersion> fVersionHistory;
@@ -101,13 +101,13 @@ public class SourceFile {
 	 * @return the sourceType
 	 */
 	public SourceType getSourceType() {
-		return sourceType;
+		return fSourceType;
 	}
 	/**
 	 * @param sourceType the sourceType to set
 	 */
 	public void setSourceType(SourceType sourceType) {
-		this.sourceType = sourceType;
+		this.fSourceType = sourceType;
 	}
 	/**
 	 * @return the metadata
