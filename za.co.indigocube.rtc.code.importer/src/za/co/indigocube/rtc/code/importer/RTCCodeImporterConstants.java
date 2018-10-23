@@ -24,6 +24,10 @@ public class RTCCodeImporterConstants {
     public static final String RTC_CPY_ZPROJECT_NAME_PROP = "rtc.cpy.zproject.name";
     public static final String RTC_DEFAULT_CS_OWNER_PROP = "rtc.default.changeset.owner";
     
+    //RTC Work Item Properties
+    public static final String RTC_PROJECT_WORKITEM_TYPE_ID_PROP = "rtc.project.workitem.type.id";
+    public static final String RTC_CHANGESET_WORKITEM_TYPE_ID_PROP = "rtc.changeset.workitem.type.id";
+    
     //RTC Enterprise Extensions Language Definition Properties
     public static final String RTCZ_LANGDEFS_COBOL_UUID_PROP = "rtcz.langdefs.COBOL.uuid";
     public static final String RTCZ_LANGDEFS_OOCOBOL_UUID_PROP = "rtcz.langdefs.OOCOBOL.uuid";
@@ -54,6 +58,11 @@ public class RTCCodeImporterConstants {
     
     //Source Folder Property
     public static final String SOURCE_FOLDER_PROP = "source.folder";
+    
+    /* RTC Work Item Type Defaults */
+    public static final String DEFAULT_PROJECT_WORKITEM_TYPE_ID = "com.ibm.team.apt.workItemType.story";
+    public static final String DEFAULT_CHANGESET_WORKITEM_TYPE_ID = "task";
+    public static final String WORKITEM_MAIN_DEVELOPMENT_TIMELINE = "Main Development";
     
     /* zFolder Constants */
     public static final String DEFAULT_COBOL_ZFOLDER = "COBOL";

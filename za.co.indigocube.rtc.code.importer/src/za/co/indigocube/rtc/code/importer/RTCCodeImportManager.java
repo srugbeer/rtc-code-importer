@@ -70,6 +70,10 @@ public class RTCCodeImportManager {
 	private String defaultChangesetOwner;
 	private String sourceFolderName;
 	
+	/* RTC Work Item Settings */
+	private String projectWorkItemTypeId;
+	private String changesetWorkItemTypeId;
+	
 	/* RTC Enterprise Extensions Settings */
 	private String cobolFolderName;
 	private String copybookFolderName;
@@ -163,6 +167,11 @@ public class RTCCodeImportManager {
 		this.defaultChangesetOwner = properties.getProperty(RTCCodeImporterConstants.RTC_DEFAULT_CS_OWNER_PROP);
 		this.sourceFolderName = properties.getProperty(RTCCodeImporterConstants.SOURCE_FOLDER_PROP);
 		
+		this.projectWorkItemTypeId = properties.getProperty(RTCCodeImporterConstants.RTC_PROJECT_WORKITEM_TYPE_ID_PROP, 
+				RTCCodeImporterConstants.DEFAULT_PROJECT_WORKITEM_TYPE_ID);		
+		this.changesetWorkItemTypeId = properties.getProperty(RTCCodeImporterConstants.RTC_CHANGESET_WORKITEM_TYPE_ID_PROP, 
+				RTCCodeImporterConstants.DEFAULT_CHANGESET_WORKITEM_TYPE_ID);
+		
 		this.cobolFolderName = properties.getProperty(RTCCodeImporterConstants.RTCZ_ZFOLDER_COBOL_PROP, 
 				RTCCodeImporterConstants.DEFAULT_COBOL_ZFOLDER);
 		this.copybookFolderName = properties.getProperty(RTCCodeImporterConstants.RTCZ_ZFOLDER_COPYBOOK_PROP, 
@@ -193,8 +202,8 @@ public class RTCCodeImportManager {
 		this.authAsmIMSDb2LangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_AuthASMIMSDB2_UUID_PROP);
 
 		this.copybookLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_COPYBOOK_UUID_PROP);
-		this.prmLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_ZFOLDER_PRM_PROP);
-		this.jclLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_ZFOLDER_JCL_PROP);
+		this.prmLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_PRM_UUID_PROP);
+		this.jclLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_JCL_UUID_PROP);
 	}
 	
 	private ArrayList<SourceFile> getSourceFileList() {
@@ -439,8 +448,8 @@ public class RTCCodeImportManager {
 	            	projectWorkItem = wiClient.findWorkItem(teamRepository, workitemId, monitor);
 	            }
 	            else {
-		        	String workItemTypeId = "com.ibm.team.apt.workItemType.story";
-		        	String devLineName = "Main Development";
+		        	String workItemTypeId = this.getProjectWorkItemTypeId();
+		        	String devLineName = RTCCodeImporterConstants.WORKITEM_MAIN_DEVELOPMENT_TIMELINE;
 		        	String summary = project;
 		        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
 
@@ -470,8 +479,8 @@ public class RTCCodeImportManager {
 	    			String langDefUUID = getLanguageDefinitionUUID(languageDef);
 	    			
 	    			//Create Work Item for Change Set
-		        	String workItemTypeId = "task";
-		        	String devLineName = "Main Development";
+		        	String workItemTypeId = this.getChangesetWorkItemTypeId();
+		        	String devLineName = RTCCodeImporterConstants.WORKITEM_MAIN_DEVELOPMENT_TIMELINE;
 		        	String summary = comment;
 		        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
 
@@ -830,6 +839,34 @@ public class RTCCodeImportManager {
 	 */
 	public void setSourceFolderName(String sourceFolderName) {
 		this.sourceFolderName = sourceFolderName;
+	}
+
+	/**
+	 * @return the projectWorkItemTypeId
+	 */
+	public String getProjectWorkItemTypeId() {
+		return projectWorkItemTypeId;
+	}
+
+	/**
+	 * @param projectWorkItemTypeId the projectWorkItemTypeId to set
+	 */
+	public void setProjectWorkItemId(String projectWorkItemTypeId) {
+		this.projectWorkItemTypeId = projectWorkItemTypeId;
+	}
+
+	/**
+	 * @return the changesetWorkItemTypeId
+	 */
+	public String getChangesetWorkItemTypeId() {
+		return changesetWorkItemTypeId;
+	}
+
+	/**
+	 * @param changesetWorkItemTypeId the changesetWorkItemTypeId to set
+	 */
+	public void setChangesetWorkItemId(String changesetWorkItemTypeId) {
+		this.changesetWorkItemTypeId = changesetWorkItemTypeId;
 	}
 
 	/**
