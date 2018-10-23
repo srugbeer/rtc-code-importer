@@ -68,7 +68,7 @@ public class ScmAttributeUtils {
 	private static void printAttributes(Map<String, Object> attributeMap, Logger logger) {
 		Set<String> keys = attributeMap.keySet();
 		if(keys.isEmpty()){
-			logger.warn("No attributes found:");
+			logger.warn("No attributes found");
 		}
 		for (String key : keys) {
 			Object value = attributeMap.get(key);

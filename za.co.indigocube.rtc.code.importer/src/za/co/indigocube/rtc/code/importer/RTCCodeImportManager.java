@@ -46,6 +46,7 @@ import com.ibm.team.scm.common.IVersionable;
 import com.ibm.team.workitem.common.IWorkItemCommon;
 import com.ibm.team.workitem.common.model.ICategory;
 import com.ibm.team.workitem.common.model.IWorkItem;
+import com.ibm.team.workitem.common.model.IWorkItemType;
 import com.ibm.team.workitem.common.model.WorkItemLinkTypes;
 
 /**
@@ -449,6 +450,15 @@ public class RTCCodeImportManager {
 	            }
 	            else {
 		        	String workItemTypeId = this.getProjectWorkItemTypeId();
+		        	IWorkItemType workItemType = wiCommon.findWorkItemType(projectArea, workItemTypeId, monitor);
+		        	if (workItemType == null) {
+		        		LOGGER.warn("Unable to find Project Work Item Type '" + workItemTypeId + "'");
+		        		LOGGER.info("Using default Project Work Item Type '" + 
+		        				RTCCodeImporterConstants.DEFAULT_PROJECT_WORKITEM_TYPE_ID + "'");		        		
+		        		workItemType = wiCommon.findWorkItemType(projectArea, 
+		        				RTCCodeImporterConstants.DEFAULT_PROJECT_WORKITEM_TYPE_ID, monitor);		        	
+		        	}
+		        	
 		        	String devLineName = RTCCodeImporterConstants.WORKITEM_MAIN_DEVELOPMENT_TIMELINE;
 		        	String summary = project;
 		        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
@@ -458,7 +468,7 @@ public class RTCCodeImportManager {
 		        	IDevelopmentLine devLine = WorkItemUtils.findDevelopmentLine(teamRepository, projectArea, devLineName, monitor);
 		    		IIterationHandle currentIteration = devLine.getCurrentIteration();
 		        	
-		        	projectWorkItem = wiClient.createWorkItem(teamRepository, projectArea, workItemTypeId, summary, rootCategory, 
+		        	projectWorkItem = wiClient.createWorkItem(teamRepository, projectArea, workItemType, summary, rootCategory, 
 		        			creationTime, creator, creator, currentIteration, monitor);
 		        	//Add to project map
 		        	this.getProjectMap().put(project, projectWorkItem.getId());
@@ -480,6 +490,15 @@ public class RTCCodeImportManager {
 	    			
 	    			//Create Work Item for Change Set
 		        	String workItemTypeId = this.getChangesetWorkItemTypeId();
+		        	IWorkItemType workItemType = wiCommon.findWorkItemType(projectArea, workItemTypeId, monitor);
+		        	if (workItemType == null) {
+		        		LOGGER.warn("Unable to find Changeset Work Item Type '" + workItemTypeId + "'");
+		        		LOGGER.info("Using default Changeset Work Item Type '" + 
+		        				RTCCodeImporterConstants.DEFAULT_CHANGESET_WORKITEM_TYPE_ID + "'");		        		
+		        		workItemType = wiCommon.findWorkItemType(projectArea, 
+		        				RTCCodeImporterConstants.DEFAULT_CHANGESET_WORKITEM_TYPE_ID, monitor);		        	
+		        	}
+		        			        	
 		        	String devLineName = RTCCodeImporterConstants.WORKITEM_MAIN_DEVELOPMENT_TIMELINE;
 		        	String summary = comment;
 		        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
@@ -489,7 +508,7 @@ public class RTCCodeImportManager {
 		        	IDevelopmentLine devLine = WorkItemUtils.findDevelopmentLine(teamRepository, projectArea, devLineName, monitor);
 		    		IIterationHandle currentIteration = devLine.getCurrentIteration();
 		        	
-		        	changeSetWorkItem = wiClient.createWorkItem(teamRepository, projectArea, workItemTypeId, summary, rootCategory, 
+		        	changeSetWorkItem = wiClient.createWorkItem(teamRepository, projectArea, workItemType, summary, rootCategory, 
 		        			creationTime, creator, creator, currentIteration, monitor);
 		        	
 		        	//Link Change Set Work Item to Project Work Item

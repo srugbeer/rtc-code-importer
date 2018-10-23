@@ -45,7 +45,7 @@ public class WorkItemClient {
 		return workItem;
 	}
 	
-	public IWorkItem createWorkItem(ITeamRepository teamRepository, IProjectArea projectArea, String workItemTypeId, 
+	public IWorkItem createWorkItem(ITeamRepository teamRepository, IProjectArea projectArea, IWorkItemType workItemType, 
 			String summary, ICategory category, Timestamp creationDate, IContributorHandle creator, 
 			IContributorHandle owner, IIterationHandle iteration, IProgressMonitor monitor) 
 					throws TeamRepositoryException {
@@ -57,7 +57,7 @@ public class WorkItemClient {
 			category = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
 		}
 		
-		IWorkItemType workItemType = wiCommon.findWorkItemType(projectArea, workItemTypeId, monitor);		
+		//IWorkItemType workItemType = wiCommon.findWorkItemType(projectArea, workItemTypeId, monitor);		
 		
 		WorkItemInitialization workItemInit = new WorkItemInitialization(summary, category, creationDate, 
 				creator, owner, iteration);
