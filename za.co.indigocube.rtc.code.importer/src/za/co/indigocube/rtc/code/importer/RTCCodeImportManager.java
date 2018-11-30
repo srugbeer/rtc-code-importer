@@ -429,7 +429,7 @@ public class RTCCodeImportManager {
 		    	
 		    	IContributor creator = null;
 	            try {
-	            	creator = RTCCodeImportUtils.findContributor(teamRepository, createdBy.toLowerCase(), monitor);
+	            	creator = RTCCodeImportUtils.findContributor(teamRepository, createdBy, monitor);
 	            }
 	            catch (TeamRepositoryException e) {
 	            	//User Not Found in Repo
