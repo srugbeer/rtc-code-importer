@@ -15,14 +15,15 @@ public class SourceFileVersion implements Comparable<SourceFileVersion> {
 	private Date fCreationDate;
 	private String fCreatedBy;
 	private String fProject;
+	private String fSoftwareReleaseCode;
+	private String fTeamId;
 	
 	/**
 	 * @param createdBy
 	 * @param creationDate
 	 */
 	public SourceFileVersion(String createdBy, Date creationDate) {
-		//this.setVersion(version);
-		new SourceFileVersion("", createdBy, creationDate);
+		this("", createdBy, creationDate, "", "", "");
 	}
 	
 	/**
@@ -31,8 +32,7 @@ public class SourceFileVersion implements Comparable<SourceFileVersion> {
 	 * @param creationBy
 	 */
 	public SourceFileVersion(String versionFileName, String createdBy, Date creationDate) {
-		//this.setVersion(version);
-		new SourceFileVersion(versionFileName, createdBy, creationDate, "");
+		this(versionFileName, createdBy, creationDate, "", "", "");
 	}
 	
 	/**
@@ -42,25 +42,39 @@ public class SourceFileVersion implements Comparable<SourceFileVersion> {
 	 * @param project
 	 */
 	public SourceFileVersion(String versionFileName, String createdBy, Date creationDate, String project) {
-		//this.setVersion(version);
-		this.setVersionFileName(versionFileName);
-		this.setCreationDate(creationDate);		
-		this.setCreatedBy(createdBy);
-		this.setProject(project);
+		this(versionFileName, createdBy, creationDate, project, "", "");
 	}
 	
 	/**
-	 * @return the version
+	 * @param versionFileName
+	 * @param createdDate
+	 * @param creationBy
+	 * @param project
+	 * @param swrCode
 	 */
-	/*public int getVersion() {
-		return fVersion;
-	}*/
+	public SourceFileVersion(String versionFileName, String createdBy, Date creationDate, 
+			String project, String swrCode) {
+		this(versionFileName, createdBy, creationDate, project, swrCode, "");
+	}
+	
 	/**
-	 * @param version the version to set
+	 * @param versionFileName
+	 * @param createdDate
+	 * @param creationBy
+	 * @param project
+	 * @param swrCode
+	 * @param teamId
 	 */
-	/*public void setVersion(int version) {
-		this.fVersion = version;
-	}*/
+	public SourceFileVersion(String versionFileName, String createdBy, Date creationDate, 
+			String project, String swrCode, String teamId) {
+		setVersionFileName(versionFileName);
+		setCreationDate(creationDate);		
+		setCreatedBy(createdBy);
+		setProject(project);
+		setSoftwareReleaseCode(swrCode);
+		setTeamId(teamId);
+	}
+	
 	/**
 	 * @return the versionFileName
 	 */
@@ -114,12 +128,42 @@ public class SourceFileVersion implements Comparable<SourceFileVersion> {
 		this.fProject = project;
 	}
 
+	/**
+	 * @return the softwareReleaseCode
+	 */
+	public String getSoftwareReleaseCode() {
+		return fSoftwareReleaseCode;
+	}
+
+	/**
+	 * @param softwareReleaseCode the softwareReleaseCode to set
+	 */
+	public void setSoftwareReleaseCode(String softwareReleaseCode) {
+		this.fSoftwareReleaseCode = softwareReleaseCode;
+	}
+
+	/**
+	 * @return the teamId
+	 */
+	public String getTeamId() {
+		return fTeamId;
+	}
+
+	/**
+	 * @param teamId the teamId to set
+	 */
+	public void setTeamId(String teamId) {
+		this.fTeamId = teamId;
+	}
+
 	@Override
 	public String toString() {
-		return "Version File: " + this.getVersionFileName() + 
-				"; Creation Date: " + this.getCreationDate() + 
-				"; Created By: " + this.getCreatedBy() + 
-				"; Project: " + this.getProject();
+		return "Version File: " + getVersionFileName() + 
+				"; Creation Date: " + getCreationDate() + 
+				"; Created By: " + getCreatedBy() + 
+				"; Project: " + getProject() +
+				"; SWR Code: " + getSoftwareReleaseCode() + 
+				"; Team Id: " + getTeamId();
 	}
 
 	@Override

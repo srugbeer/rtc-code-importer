@@ -15,7 +15,7 @@ public class SourceFile {
 	private String fPath;
 	private SourceType fSourceType;
 	private Map<String, String> fMetadata;
-	private Map<Integer, SourceFileVersion> fHistory;
+	//private Map<Integer, SourceFileVersion> fHistory;
 	private TreeSet<SourceFileVersion> fVersionHistory;
 	private int fNumberOfVersions;
 	
@@ -61,7 +61,7 @@ public class SourceFile {
 	 * @param metadata
 	 * @param history
 	 */
-	public SourceFile(String name, String path, Map<String, String> metadata,
+/*	public SourceFile(String name, String path, Map<String, String> metadata,
 			Map<Integer, SourceFileVersion> history) {
 		super();
 		this.setName(name);
@@ -69,7 +69,7 @@ public class SourceFile {
 		this.setMetadata(metadata);
 		this.setHistory(history);
 		this.setNumberOfVersions(history.size());
-	}
+	}*/
 
 	/**
 	 * @return the name
@@ -140,17 +140,17 @@ public class SourceFile {
 	/**
 	 * @return the history
 	 */
-	public Map<Integer, SourceFileVersion> getHistory() {
-		return fHistory;
-	}
+//	public Map<Integer, SourceFileVersion> getHistory() {
+//		return fHistory;
+//	}
 
 	/**
 	 * @param history the history to set
 	 */
-	public void setHistory(Map<Integer, SourceFileVersion> history) {
-		this.fHistory = history;
-	}
-	
+//	public void setHistory(Map<Integer, SourceFileVersion> history) {
+//		this.fHistory = history;
+//	}
+//	
 	/**
 	 * @return the numberOfVersions
 	 */

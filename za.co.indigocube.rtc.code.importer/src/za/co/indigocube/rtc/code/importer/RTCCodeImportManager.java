@@ -32,6 +32,7 @@ import za.co.indigocube.rtc.code.importer.workitem.WorkItemUtils;
 
 import com.ibm.team.filesystem.common.IFileItem;
 import com.ibm.team.process.common.IDevelopmentLine;
+import com.ibm.team.process.common.IIteration;
 import com.ibm.team.process.common.IIterationHandle;
 import com.ibm.team.process.common.IProjectArea;
 import com.ibm.team.repository.client.ITeamRepository;
@@ -74,6 +75,10 @@ public class RTCCodeImportManager {
 	/* RTC Work Item Settings */
 	private String projectWorkItemTypeId;
 	private String changesetWorkItemTypeId;
+	private String projectTimeline;
+	private String oldSWRCodeIteration;
+	private String maintenanceIteration;
+	private String teamIdCategory;
 	
 	/* RTC Enterprise Extensions Settings */
 	private String cobolFolderName;
@@ -172,6 +177,15 @@ public class RTCCodeImportManager {
 				RTCCodeImporterConstants.DEFAULT_PROJECT_WORKITEM_TYPE_ID);		
 		this.changesetWorkItemTypeId = properties.getProperty(RTCCodeImporterConstants.RTC_CHANGESET_WORKITEM_TYPE_ID_PROP, 
 				RTCCodeImporterConstants.DEFAULT_CHANGESET_WORKITEM_TYPE_ID);
+		
+		this.projectTimeline = properties.getProperty(RTCCodeImporterConstants.RTC_PROJECT_TIMELINE_PROP, 
+				RTCCodeImporterConstants.WORKITEM_MAIN_DEVELOPMENT_TIMELINE);
+		
+		this.oldSWRCodeIteration = properties.getProperty(RTCCodeImporterConstants.RTC_OLD_SWR_CODE_ITERATION);
+		
+		this.maintenanceIteration = properties.getProperty(RTCCodeImporterConstants.RTC_MAINTENANCE_ITERATION);
+		
+		this.teamIdCategory = properties.getProperty(RTCCodeImporterConstants.RTC_TEAM_ID_CATEGORY);
 		
 		this.cobolFolderName = properties.getProperty(RTCCodeImporterConstants.RTCZ_ZFOLDER_COBOL_PROP, 
 				RTCCodeImporterConstants.DEFAULT_COBOL_ZFOLDER);
@@ -427,17 +441,17 @@ public class RTCCodeImportManager {
 		    	LOGGER.info(comment);
 		    	LOGGER.info("Creation Date: " + creationDate);
 		    	
-		    	IContributor creator = null;
+		    	IContributor projectCreator = null;
 	            try {
-	            	creator = RTCCodeImportUtils.findContributor(teamRepository, createdBy, monitor);
+	            	projectCreator = RTCCodeImportUtils.findContributor(teamRepository, createdBy, monitor);
 	            }
 	            catch (TeamRepositoryException e) {
 	            	//User Not Found in Repo
 	            	if (e instanceof ItemNotFoundException) {
-	            		creator = RTCCodeImportUtils.findContributor(teamRepository, this.getDefaultChangesetOwner(), 
+	            		projectCreator = RTCCodeImportUtils.findContributor(teamRepository, this.getDefaultChangesetOwner(), 
 	            				monitor);
 	            		LOGGER.warn(e.getMessage());
-	            		LOGGER.info("Using default user: " + creator.getName() + " (" + creator.getUserId() + ")");
+	            		LOGGER.info("Using default user: " + projectCreator.getName() + " (" + projectCreator.getUserId() + ")");
 	            	}
 	            }
 	            
@@ -445,31 +459,104 @@ public class RTCCodeImportManager {
 	            
 	            //First check if Project Work Item already exists
 	            if (this.getProjectMap().containsKey(project)) {
-	            	int workitemId = this.getProjectMap().get(project);
-	            	projectWorkItem = wiClient.findWorkItem(teamRepository, workitemId, monitor);
+	            	int projectWorkitemId = this.getProjectMap().get(project);
+	            	projectWorkItem = wiClient.findWorkItem(teamRepository, projectWorkitemId, monitor);
 	            }
 	            else {
-		        	String workItemTypeId = this.getProjectWorkItemTypeId();
-		        	IWorkItemType workItemType = wiCommon.findWorkItemType(projectArea, workItemTypeId, monitor);
-		        	if (workItemType == null) {
-		        		LOGGER.warn("Unable to find Project Work Item Type '" + workItemTypeId + "'");
+		        	String projectWorkItemTypeId = this.getProjectWorkItemTypeId();
+		        	IWorkItemType projectWorkItemType = wiCommon.findWorkItemType(projectArea, projectWorkItemTypeId, monitor);
+		        	if (projectWorkItemType == null) {
+		        		LOGGER.warn("Unable to find Project Work Item Type '" + projectWorkItemTypeId + "'");
 		        		LOGGER.info("Using default Project Work Item Type '" + 
 		        				RTCCodeImporterConstants.DEFAULT_PROJECT_WORKITEM_TYPE_ID + "'");		        		
-		        		workItemType = wiCommon.findWorkItemType(projectArea, 
+		        		projectWorkItemType = wiCommon.findWorkItemType(projectArea, 
 		        				RTCCodeImporterConstants.DEFAULT_PROJECT_WORKITEM_TYPE_ID, monitor);		        	
 		        	}
 		        	
-		        	String devLineName = RTCCodeImporterConstants.WORKITEM_MAIN_DEVELOPMENT_TIMELINE;
-		        	String summary = project;
-		        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
+		        	String projectSummary = project;
+		        	String projectDescription = projectSummary;
+		        	
+		        	String projectComment = null;
+		        	
+		        	String projectTeamIdCategoryName = getTeamIdCategory();
+		        	ICategory projectTeamIdCategory = null;
+		        	if (projectTeamIdCategoryName.equals("")) {
+		        		LOGGER.warn("Team Id not set");
+		        	}
+		        	else {
+		        		LOGGER.info("Team Id is '" + projectTeamIdCategoryName + "'");
+		        		LOGGER.info("Looking for the Category that corresponds to the Team Id...");
+		        		projectTeamIdCategory = WorkItemUtils.
+		        				findCategory(teamRepository, projectArea, projectTeamIdCategoryName, monitor);
+		        		if (projectTeamIdCategory != null) {
+		        			LOGGER.info("Found Category corresponding to Team Id '" + projectTeamIdCategoryName + "'");		        			
+		        		}
+		        		else {
+		        			LOGGER.warn("Unable to find Category corresponding to Team Id '" + projectTeamIdCategoryName + "'");
+		        		}
+		        	}
+		        	
+		        	if (projectTeamIdCategory == null) {
+		        		LOGGER.info("Using Root category");
+		        		projectTeamIdCategory = wiCommon.findAllCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
+		        	}
 
-		        	Timestamp creationTime = new Timestamp(creationDate.getTime());
+		        	Timestamp projectCreationTime = new Timestamp(creationDate.getTime());
 		        	
+		        	String devLineName = getProjectTimeline();
 		        	IDevelopmentLine devLine = WorkItemUtils.findDevelopmentLine(teamRepository, projectArea, devLineName, monitor);
-		    		IIterationHandle currentIteration = devLine.getCurrentIteration();
+		    		
+		    		IIterationHandle projectIteration = null;   		
+		    		LOGGER.info("Checking if version references a SWR Code...");
+		    		String swrCode = sourceFileVersion.getSoftwareReleaseCode();
+		    		
+		    		if (!swrCode.equals("")) { //SWR Code is not empty
+		    			LOGGER.info("Version references SWR Code '" + swrCode + "'");
+		    			LOGGER.info("Looking for Iteration that corresponds to the SWR Code...");
+		    			IIteration swrCodeIteration = WorkItemUtils.
+		    					findIteration(teamRepository, devLine, swrCode, monitor);
+		    			
+		    			if (swrCodeIteration != null) { //Found corresponding iteration
+		    				LOGGER.info("Found Iteration corresponding to SWR Code '" + swrCode + "'");
+		    				projectIteration = swrCodeIteration;
+		    			}
+		    			else { //Did not find corresponding iteration
+		    				LOGGER.warn("Iteration corresponding to the SWR Code '" 
+		    						+ swrCode + "' not found. It is possibly an older SWR Code");
+		    				LOGGER.info("Searching for Old SWR Code Iteration...");
+		    				IIteration oldSWRCodeIteration = WorkItemUtils.
+		    						findIteration(teamRepository, devLine, getOldSWRCodeIteration(), monitor);
+		    				if (oldSWRCodeIteration != null) {
+		    					projectIteration = oldSWRCodeIteration;
+		    					projectComment = "Original SWR Code was: " + swrCode;
+		    				}
+		    			}
+		    		}
+		    		else { //SWR Code is empty, most likely version was created via Maintenance route
+		    			LOGGER.info("Version does not reference a SWR Code");
+		    			LOGGER.info("This is most likely because the version was created via the Maintenance Route");
+		    			LOGGER.info("Searching for iteration that corresponds to Maintenance");
+		    			String maintenanceIterationName = getMaintenanceIteration();
+		    			IIteration maintenanceIteration = WorkItemUtils.
+		    					findIteration(teamRepository, devLine, maintenanceIterationName, monitor);
+		    			
+		    			if (maintenanceIteration != null) { //Found maintenance iteration
+		    				LOGGER.info("Found Maintenance Iteration");
+		    				projectIteration = maintenanceIteration;
+		    			}
+		    			else { //Maintenance iteration not found
+		    				LOGGER.warn("Maintenance Iteration not found.");
+		    			}
+		    		}
 		        	
-		        	projectWorkItem = wiClient.createWorkItem(teamRepository, projectArea, workItemType, summary, rootCategory, 
-		        			creationTime, creator, creator, currentIteration, monitor);
+		    		if (projectIteration == null) { //Unable to find correct iteration. Defaulting to current iteration
+		    			LOGGER.info("Defaulting to using current iteration");
+		    			projectIteration = devLine.getCurrentIteration();
+		    		}
+		    		
+		        	projectWorkItem = wiClient.createWorkItem(teamRepository, projectArea, projectWorkItemType, 
+		        			projectSummary, projectDescription, projectTeamIdCategory, projectCreationTime, 
+		        			projectCreator, projectCreator, projectIteration, projectComment, monitor);
 		        	//Add to project map
 		        	this.getProjectMap().put(project, projectWorkItem.getId());
 	            }
@@ -489,27 +576,51 @@ public class RTCCodeImportManager {
 	    			String langDefUUID = getLanguageDefinitionUUID(languageDef);
 	    			
 	    			//Create Work Item for Change Set
-		        	String workItemTypeId = this.getChangesetWorkItemTypeId();
-		        	IWorkItemType workItemType = wiCommon.findWorkItemType(projectArea, workItemTypeId, monitor);
-		        	if (workItemType == null) {
-		        		LOGGER.warn("Unable to find Changeset Work Item Type '" + workItemTypeId + "'");
+		        	String csiWorkItemTypeId = this.getChangesetWorkItemTypeId();
+		        	IWorkItemType csiWorkItemType = wiCommon.findWorkItemType(projectArea, csiWorkItemTypeId, monitor);
+		        	if (csiWorkItemType == null) {
+		        		LOGGER.warn("Unable to find Changeset Work Item Type '" + csiWorkItemTypeId + "'");
 		        		LOGGER.info("Using default Changeset Work Item Type '" + 
 		        				RTCCodeImporterConstants.DEFAULT_CHANGESET_WORKITEM_TYPE_ID + "'");		        		
-		        		workItemType = wiCommon.findWorkItemType(projectArea, 
+		        		csiWorkItemType = wiCommon.findWorkItemType(projectArea, 
 		        				RTCCodeImporterConstants.DEFAULT_CHANGESET_WORKITEM_TYPE_ID, monitor);		        	
 		        	}
-		        			        	
-		        	String devLineName = RTCCodeImporterConstants.WORKITEM_MAIN_DEVELOPMENT_TIMELINE;
-		        	String summary = comment;
-		        	ICategory rootCategory = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
+		        			        			        	
+		        	String csiSummary = comment;
+		        	String csiDescription = csiSummary;
 
-		        	Timestamp creationTime = new Timestamp(creationDate.getTime());
+		        	String csiTeamIdCategoryName = sourceFileVersion.getTeamId();
+		        	ICategory csiTeamIdCategory = null;
+		        	if (csiTeamIdCategoryName.equals("")) {
+		        		LOGGER.warn("Team Id not set for version");
+		        	}
+		        	else {
+		        		LOGGER.info("Team Id is '" + csiTeamIdCategoryName + "'");
+		        		LOGGER.info("Looking for the Category that corresponds to the Team Id...");
+		        		csiTeamIdCategory = WorkItemUtils.
+		        				findCategory(teamRepository, projectArea, csiTeamIdCategoryName, monitor);
+		        		if (csiTeamIdCategory != null) {
+		        			LOGGER.info("Found Category corresponding to Team Id '" + csiTeamIdCategoryName + "'");		        			
+		        		}
+		        		else {
+		        			LOGGER.warn("Unable to find Category corresponding to Team Id '" + csiTeamIdCategoryName + "'");
+		        		}
+		        	}
 		        	
-		        	IDevelopmentLine devLine = WorkItemUtils.findDevelopmentLine(teamRepository, projectArea, devLineName, monitor);
-		    		IIterationHandle currentIteration = devLine.getCurrentIteration();
+		        	if (csiTeamIdCategory == null) {
+		        		LOGGER.info("Using Root category");
+		        		csiTeamIdCategory = wiCommon.findAllCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
+		        	}
 		        	
-		        	changeSetWorkItem = wiClient.createWorkItem(teamRepository, projectArea, workItemType, summary, rootCategory, 
-		        			creationTime, creator, creator, currentIteration, monitor);
+		        	Timestamp csiCreationTime = new Timestamp(creationDate.getTime());
+		        	
+		        	//String devLineName = RTCCodeImporterConstants.WORKITEM_MAIN_DEVELOPMENT_TIMELINE;
+		        	//IDevelopmentLine devLine = WorkItemUtils.findDevelopmentLine(teamRepository, projectArea, devLineName, monitor);
+		    		//IIterationHandle currentIteration = devLine.getCurrentIteration();
+		        	
+		        	changeSetWorkItem = wiClient.createWorkItem(teamRepository, projectArea, 
+		        			csiWorkItemType, csiSummary, csiDescription, csiTeamIdCategory, 
+		        			csiCreationTime, projectCreator, projectCreator, projectWorkItem.getTarget(), null, monitor);
 		        	
 		        	//Link Change Set Work Item to Project Work Item
 		        	String linkType = WorkItemLinkTypes.PARENT_WORK_ITEM;
@@ -520,7 +631,7 @@ public class RTCCodeImportManager {
 					LOGGER.info("Workspace path: " + path);
 					fileItem = scmClient.addFileToSourceControl(teamRepository, versionFile, fileName, 
 							sourceWorkspaceConnection, path, componentHandle, config, comment, creationDate, 
-							creator, changeSetWorkItem, RTCCodeImporterConstants.LANGUAGE_DEFINITION_USER_PROPERTY, 
+							projectCreator, changeSetWorkItem, RTCCodeImporterConstants.LANGUAGE_DEFINITION_USER_PROPERTY, 
 							langDefUUID, monitor);    			
 			    	
 			    	//Deliver change to Target Stream
@@ -886,6 +997,62 @@ public class RTCCodeImportManager {
 	 */
 	public void setChangesetWorkItemId(String changesetWorkItemTypeId) {
 		this.changesetWorkItemTypeId = changesetWorkItemTypeId;
+	}
+
+	/**
+	 * @return the projectTimeline
+	 */
+	public String getProjectTimeline() {
+		return projectTimeline;
+	}
+
+	/**
+	 * @param projectTimeline the projectTimeline to set
+	 */
+	public void setProjectTimeline(String projectTimeline) {
+		this.projectTimeline = projectTimeline;
+	}
+
+	/**
+	 * @return the oldSWRCodeIteration
+	 */
+	public String getOldSWRCodeIteration() {
+		return oldSWRCodeIteration;
+	}
+
+	/**
+	 * @param oldSWRCodeIteration the oldSWRCodeIteration to set
+	 */
+	public void setOldSWRCodeIteration(String oldSWRCodeIteration) {
+		this.oldSWRCodeIteration = oldSWRCodeIteration;
+	}
+
+	/**
+	 * @return the maintenanceIteration
+	 */
+	public String getMaintenanceIteration() {
+		return maintenanceIteration;
+	}
+
+	/**
+	 * @param maintenanceIteration the maintenanceIteration to set
+	 */
+	public void setMaintenanceIteration(String maintenanceIteration) {
+		this.maintenanceIteration = maintenanceIteration;
+	}
+
+	/**
+	 * @return the teamIdCategory
+	 */
+	public String getTeamIdCategory() {
+		return teamIdCategory;
+	}
+
+	/**
+	 * @param teamIdCategory the teamIdCategory to set
+	 */
+	public void setTeamIdCategory(String teamIdCategory) {
+		this.teamIdCategory = teamIdCategory;
 	}
 
 	/**

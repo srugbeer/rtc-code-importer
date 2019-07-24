@@ -16,6 +16,8 @@ public class RTCCodeImporterConstants {
 	public static final String RTC_REPO_USERNAME_PROP = "rtc.repo.username";
 	public static final String RTC_REPO_PASSWORD_PROP = "rtc.repo.password";
 	public static final String RTC_PROJECT_NAME_PROP = "rtc.project.name";
+	
+	//RTC SCM Properties
 	public static final String RTC_STREAM_NAME_PROP = "rtc.stream.name";
 	public static final String RTC_WORKSPACE_NAME_PROP = "rtc.workspace.name";
     public static final String RTC_PGM_COMPONENT_NAME = "rtc.pgm.component.name";
@@ -27,6 +29,10 @@ public class RTCCodeImporterConstants {
     //RTC Work Item Properties
     public static final String RTC_PROJECT_WORKITEM_TYPE_ID_PROP = "rtc.project.workitem.type.id";
     public static final String RTC_CHANGESET_WORKITEM_TYPE_ID_PROP = "rtc.changeset.workitem.type.id";
+	public static final String RTC_PROJECT_TIMELINE_PROP = "rtc.project.timeline";
+    public static final String RTC_OLD_SWR_CODE_ITERATION = "rtc.old.swr.code.iteration";
+    public static final String RTC_MAINTENANCE_ITERATION = "rtc.maintenance.iteration";
+    public static final String RTC_TEAM_ID_CATEGORY = "rtc.team.id.category";
     
     //RTC Enterprise Extensions Language Definition Properties
     public static final String RTCZ_LANGDEFS_COBOL_UUID_PROP = "rtcz.langdefs.COBOL.uuid";

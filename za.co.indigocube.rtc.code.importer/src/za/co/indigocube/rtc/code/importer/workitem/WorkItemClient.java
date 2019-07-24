@@ -46,23 +46,23 @@ public class WorkItemClient {
 	}
 	
 	public IWorkItem createWorkItem(ITeamRepository teamRepository, IProjectArea projectArea, IWorkItemType workItemType, 
-			String summary, ICategory category, Timestamp creationDate, IContributorHandle creator, 
-			IContributorHandle owner, IIterationHandle iteration, IProgressMonitor monitor) 
+			String summary, String description, ICategory category, Timestamp creationDate, IContributorHandle creator, 
+			IContributorHandle owner, IIterationHandle iteration, String comment, IProgressMonitor monitor) 
 					throws TeamRepositoryException {
 		
 		IWorkItem workItem = null;
 		IAuditableClient auditableClient = WorkItemUtils.getAuditableClient(teamRepository);
 		IWorkItemCommon wiCommon = WorkItemUtils.getWorkItemCommon(teamRepository);
 		if (category == null) {
-			category = wiCommon.findCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
+			category = wiCommon.findAllCategories(projectArea, ICategory.DEFAULT_PROFILE, monitor).get(0);
 		}
 		
 		//IWorkItemType workItemType = wiCommon.findWorkItemType(projectArea, workItemTypeId, monitor);		
 		
-		WorkItemInitialization workItemInit = new WorkItemInitialization(summary, category, creationDate, 
-				creator, owner, iteration);
+		WorkItemInitialization workItemInit = new WorkItemInitialization(summary, description, category, creationDate, 
+				creator, owner, iteration, comment);
 		IWorkItemHandle handle = workItemInit.run(workItemType, null);
-		workItem = auditableClient.resolveAuditable(handle, IWorkItem.FULL_PROFILE, null);
+		workItem = auditableClient.resolveAuditable(handle, IWorkItem.FULL_PROFILE, monitor);
 		
 		return workItem;
 	}

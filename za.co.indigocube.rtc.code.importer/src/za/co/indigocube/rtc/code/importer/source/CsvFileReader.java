@@ -66,7 +66,6 @@ public class CsvFileReader {
 	
 	public static TreeSet<SourceFileVersion> readAuditCsvFile(File auditFile) {
 		
-		//Map<Integer, SourceFileVersion> versionMap = new HashMap<Integer, SourceFileVersion>();
 		TreeSet<SourceFileVersion> versionHistory = new TreeSet<SourceFileVersion>();
 		
 		String[] headers = null, values = null;
@@ -77,17 +76,19 @@ public class CsvFileReader {
             br = new BufferedReader(new FileReader(auditFile));
             
             //Read header line
-            line = br.readLine().trim();
+            line = br.readLine();
             if (line != null) {
+            	line = line.trim();
             	headers = line.split(seperator);
             }
             while ((line = br.readLine()) != null) {
             	line = line.trim();
-            	//int version = -1;
             	String versionIndex = "";
             	String creationDate = "";
             	String createdBy = "";
             	String project = "";
+            	String swrCode = "";
+            	String teamId = "";
             	
                 values = line.split(seperator);                
                 for (int i = 0; i < headers.length; i++) {                	
@@ -97,17 +98,16 @@ public class CsvFileReader {
                 		case "CreationDate" : creationDate = values[i];
                 		case "CreatedBy" : createdBy = values[i];
                 		case "Project" : project = values[i];
+                		case "SWRCode" : swrCode = values[i];
+                		case "TeamId" : teamId = values[i];
                 	}                	
                 }
         		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmss");
         		Date date = dateFormat.parse(creationDate);
-        		//String versionFileName = version + "-" + auditFile.getName().substring(0, auditFile.getName().indexOf("-"));
         		
-        		//System.out.println("Version Index: " + versionIndex);
-        		
-                SourceFileVersion sourceFileVersion = new SourceFileVersion(versionIndex, createdBy, date, project);
+                SourceFileVersion sourceFileVersion = 
+                		new SourceFileVersion(versionIndex, createdBy, date, project, swrCode, teamId);
                 versionHistory.add(sourceFileVersion);
-                //versionMap.put(version, sourceFileVersion);
             }
 
         } catch (FileNotFoundException e) {
@@ -125,7 +125,6 @@ public class CsvFileReader {
                 }
             }
         }
-		//return versionMap;
 		return versionHistory;
 	}
 }

@@ -57,7 +57,7 @@ public class ScmUtils {
 	    IProcessItemService processItemService = (IProcessItemService) teamRepository.
 	    		getClientLibrary(IProcessItemService.class);
 	    
-	    URI uri = URI.create(projectAreaName.replaceAll(" ", "%20"));
+	    URI uri = URI.create(projectAreaName.replaceAll(" ", "%20").replaceAll("\\[", "%5B").replaceAll("\\]", "%5D"));
 		projectArea = (IProjectArea) processItemService.findProcessArea(uri, null, null);
 	
 		return projectArea;
