@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import za.co.indigocube.rtc.code.importer.workitem.WorkItemUtils.WorkItemInitialization;
+import za.co.indigocube.rtc.code.importer.workitem.WorkItemUtils.WorkItemSetWorkflowState;
 
 import com.ibm.team.links.client.ILinkManager;
 import com.ibm.team.links.common.ILink;
@@ -45,9 +46,10 @@ public class WorkItemClient {
 		return workItem;
 	}
 	
-	public IWorkItem createWorkItem(ITeamRepository teamRepository, IProjectArea projectArea, IWorkItemType workItemType, 
-			String summary, String description, ICategory category, Timestamp creationDate, IContributorHandle creator, 
-			IContributorHandle owner, IIterationHandle iteration, String comment, IProgressMonitor monitor) 
+	public IWorkItem createWorkItem(ITeamRepository teamRepository, IProjectArea projectArea, 
+			IWorkItemType workItemType, String summary, String description, String stateId, 
+			ICategory category, Timestamp creationDate, IContributorHandle creator, IContributorHandle owner, 
+			IIterationHandle iteration, String comment, IProgressMonitor monitor) 
 					throws TeamRepositoryException {
 		
 		IWorkItem workItem = null;
@@ -59,12 +61,18 @@ public class WorkItemClient {
 		
 		//IWorkItemType workItemType = wiCommon.findWorkItemType(projectArea, workItemTypeId, monitor);		
 		
-		WorkItemInitialization workItemInit = new WorkItemInitialization(summary, description, category, creationDate, 
-				creator, owner, iteration, comment);
-		IWorkItemHandle handle = workItemInit.run(workItemType, null);
+		WorkItemInitialization workItemInit = new WorkItemInitialization(summary, description, stateId,
+				category, creationDate, creator, owner, iteration, comment);
+		IWorkItemHandle handle = workItemInit.run(workItemType, monitor);
 		workItem = auditableClient.resolveAuditable(handle, IWorkItem.FULL_PROFILE, monitor);
 		
 		return workItem;
+	}
+	
+	public void setWorkItemState(ITeamRepository teamRepository, IWorkItem workItem, 
+			String stateId, IProgressMonitor monitor) throws TeamRepositoryException {
+		WorkItemSetWorkflowState workItemSetWorkflowState = new WorkItemSetWorkflowState(stateId);
+		workItemSetWorkflowState.run(workItem, monitor);
 	}
 	
 	public void createWorkItemLink(ITeamRepository teamRepository, IWorkItem sourceWorkItem, 

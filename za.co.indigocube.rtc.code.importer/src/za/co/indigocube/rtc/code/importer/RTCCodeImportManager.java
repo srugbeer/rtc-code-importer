@@ -109,6 +109,17 @@ public class RTCCodeImportManager {
 	private String jclLangDefUUID;
 	private String prmLangDefUUID;
 	
+	/* Metadata Column Headings */
+	private String memberTypeMetadataColumn;
+	private String compileTypeMetadataColumn;
+	private String compileLanguageMetadataColumn;
+	private String imsMetadataColumn;
+	private String db2MetadataColumn;
+	private String ooCobolMetadataColumn;
+	private String apfAuthMetadataColumn;
+	private String groupIdMetadataColumn;
+	private String teamIdMetadataColumn;
+	
 	/* Internal Counters */
 	private int fileCount;
 	private int versionCount;
@@ -219,6 +230,16 @@ public class RTCCodeImportManager {
 		this.copybookLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_COPYBOOK_UUID_PROP);
 		this.prmLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_PRM_UUID_PROP);
 		this.jclLangDefUUID = properties.getProperty(RTCCodeImporterConstants.RTCZ_LANGDEFS_JCL_UUID_PROP);
+		
+		this.memberTypeMetadataColumn = properties.getProperty(RTCCodeImporterConstants.METADATA_HEADER_MEMBER_TYPE_PROP);
+		this.compileTypeMetadataColumn = properties.getProperty(RTCCodeImporterConstants.METADATA_HEADER_COMPILE_TYPE_PROP);
+		this.compileLanguageMetadataColumn = properties.getProperty(RTCCodeImporterConstants.METADATA_HEADER_COMPILE_LANGUAGE_PROP);
+		this.ooCobolMetadataColumn = properties.getProperty(RTCCodeImporterConstants.METADATA_HEADER_OOCOBOL_PROP);
+		this.apfAuthMetadataColumn = properties.getProperty(RTCCodeImporterConstants.METADATA_HEADER_APF_AUTH_PROP);
+		this.imsMetadataColumn = properties.getProperty(RTCCodeImporterConstants.METADATA_HEADER_IMS_PROP);
+		this.db2MetadataColumn = properties.getProperty(RTCCodeImporterConstants.METADATA_HEADER_DB2_PROP);
+		this.groupIdMetadataColumn = properties.getProperty(RTCCodeImporterConstants.METADATA_HEADER_GROUP_ID_PROP);
+		this.teamIdMetadataColumn = properties.getProperty(RTCCodeImporterConstants.METADATA_HEADER_TEAM_ID_PROP);
 	}
 	
 	private ArrayList<SourceFile> getSourceFileList() {
@@ -252,8 +273,8 @@ public class RTCCodeImportManager {
 		
 		SourceType sourceType = sourceFile.getSourceType();
 		Map<String, String> metadata = sourceFile.getMetadata();
-		String ims = metadata.get("IMS");
-    	String db2 = metadata.get("DB2");
+		String ims = metadata.get(imsMetadataColumn);
+    	String db2 = metadata.get(db2MetadataColumn);
 		
 		switch (sourceType) {
 			case COPYBOOK :
@@ -269,11 +290,11 @@ public class RTCCodeImportManager {
 				languageDef = "REXX";
 				break;
 			case COBOL :
-				String ooCobol = metadata.get("OOCobol");
+				String ooCobol = metadata.get(ooCobolMetadataColumn);
 				languageDef = ooCobol.equals("Y") ? "OOCOBOL" : "COBOL";
 				break;
 			case ASSEMBLER :
-				String apfAuth = metadata.get("APFAuth");
+				String apfAuth = metadata.get(apfAuthMetadataColumn);
 				languageDef = apfAuth.equals("Y") ? "AuthASM" : "ASM";
 				break;
 			default :
@@ -460,9 +481,11 @@ public class RTCCodeImportManager {
 	            //First check if Project Work Item already exists
 	            if (this.getProjectMap().containsKey(project)) {
 	            	int projectWorkitemId = this.getProjectMap().get(project);
+	            	LOGGER.info("Using existing Project Work Item " + projectWorkitemId);
 	            	projectWorkItem = wiClient.findWorkItem(teamRepository, projectWorkitemId, monitor);
 	            }
 	            else {
+	            	LOGGER.info("Creating new Project Work Item");
 		        	String projectWorkItemTypeId = this.getProjectWorkItemTypeId();
 		        	IWorkItemType projectWorkItemType = wiCommon.findWorkItemType(projectArea, projectWorkItemTypeId, monitor);
 		        	if (projectWorkItemType == null) {
@@ -475,7 +498,6 @@ public class RTCCodeImportManager {
 		        	
 		        	String projectSummary = project;
 		        	String projectDescription = projectSummary;
-		        	
 		        	String projectComment = null;
 		        	
 		        	String projectTeamIdCategoryName = getTeamIdCategory();
@@ -555,10 +577,15 @@ public class RTCCodeImportManager {
 		    		}
 		    		
 		        	projectWorkItem = wiClient.createWorkItem(teamRepository, projectArea, projectWorkItemType, 
-		        			projectSummary, projectDescription, projectTeamIdCategory, projectCreationTime, 
+		        			projectSummary, projectDescription, null, projectTeamIdCategory, projectCreationTime, 
 		        			projectCreator, projectCreator, projectIteration, projectComment, monitor);
 		        	//Add to project map
 		        	this.getProjectMap().put(project, projectWorkItem.getId());
+		        	
+		        	//Close Project Work Item (i.e. set state to 'In P')
+		        	LOGGER.info("Closing Project Work Item");
+		        	String projectStateId = RTCCodeImporterConstants.RTC_WORKFLOW_PROJECT_IN_P;
+		        	wiClient.setWorkItemState(teamRepository, projectWorkItem, projectStateId, monitor);
 	            }
 	            
 	            try {
@@ -576,6 +603,7 @@ public class RTCCodeImportManager {
 	    			String langDefUUID = getLanguageDefinitionUUID(languageDef);
 	    			
 	    			//Create Work Item for Change Set
+	    			LOGGER.info("Creating CSI Work Item for change set");
 		        	String csiWorkItemTypeId = this.getChangesetWorkItemTypeId();
 		        	IWorkItemType csiWorkItemType = wiCommon.findWorkItemType(projectArea, csiWorkItemTypeId, monitor);
 		        	if (csiWorkItemType == null) {
@@ -588,7 +616,6 @@ public class RTCCodeImportManager {
 		        			        			        	
 		        	String csiSummary = comment;
 		        	String csiDescription = csiSummary;
-
 		        	String csiTeamIdCategoryName = sourceFileVersion.getTeamId();
 		        	ICategory csiTeamIdCategory = null;
 		        	if (csiTeamIdCategoryName.equals("")) {
@@ -619,7 +646,7 @@ public class RTCCodeImportManager {
 		    		//IIterationHandle currentIteration = devLine.getCurrentIteration();
 		        	
 		        	changeSetWorkItem = wiClient.createWorkItem(teamRepository, projectArea, 
-		        			csiWorkItemType, csiSummary, csiDescription, csiTeamIdCategory, 
+		        			csiWorkItemType, csiSummary, csiDescription, null, csiTeamIdCategory, 
 		        			csiCreationTime, projectCreator, projectCreator, projectWorkItem.getTarget(), null, monitor);
 		        	
 		        	//Link Change Set Work Item to Project Work Item
@@ -659,7 +686,11 @@ public class RTCCodeImportManager {
 			    		LOGGER.warn("Custom attributes will not be set");
 			    	}
 			    	
-			    	//Close work item
+			    	//Close CSI Work Item (i.e. set state to 'In P')
+			    	LOGGER.info("Closing CSI Work Item");
+		        	String csiStateId = RTCCodeImporterConstants.RTC_WORKFLOW_CSI_IN_P;
+			    	wiClient.setWorkItemState(teamRepository, changeSetWorkItem, csiStateId, monitor);
+			    	
 			    	version++;
 			    	versionCount++;
 			    	LOGGER.info("");
@@ -1389,6 +1420,133 @@ public class RTCCodeImportManager {
 	 */
 	public void setPrmLangDefUUID(String prmLangDefUUID) {
 		this.prmLangDefUUID = prmLangDefUUID;
+	}
+
+	/**
+	 * @return the memberTypeMetadataColumn
+	 */
+	public String getMemberTypeMetadataColumn() {
+		return memberTypeMetadataColumn;
+	}
+
+	/**
+	 * @param memberTypeMetadataColumn the memberTypeMetadataColumn to set
+	 */
+	public void setMemberTypeMetadataColumn(String memberTypeMetadataColumn) {
+		this.memberTypeMetadataColumn = memberTypeMetadataColumn;
+	}
+
+	/**
+	 * @return the compileTypeMetadataColumn
+	 */
+	public String getCompileTypeMetadataColumn() {
+		return compileTypeMetadataColumn;
+	}
+
+	/**
+	 * @param compileTypeMetadataColumn the compileTypeMetadataColumn to set
+	 */
+	public void setCompileTypeMetadataColumn(String compileTypeMetadataColumn) {
+		this.compileTypeMetadataColumn = compileTypeMetadataColumn;
+	}
+
+	/**
+	 * @return the compileLanguageMetadataColumn
+	 */
+	public String getCompileLanguageMetadataColumn() {
+		return compileLanguageMetadataColumn;
+	}
+
+	/**
+	 * @param compileLanguageMetadataColumn the compileLanguageMetadataColumn to set
+	 */
+	public void setCompileLanguageMetadataColumn(
+			String compileLanguageMetadataColumn) {
+		this.compileLanguageMetadataColumn = compileLanguageMetadataColumn;
+	}
+
+	/**
+	 * @return the imsMetadataColumn
+	 */
+	public String getImsMetadataColumn() {
+		return imsMetadataColumn;
+	}
+
+	/**
+	 * @param imsMetadataColumn the imsMetadataColumn to set
+	 */
+	public void setImsMetadataColumn(String imsMetadataColumn) {
+		this.imsMetadataColumn = imsMetadataColumn;
+	}
+
+	/**
+	 * @return the db2MetadataColumn
+	 */
+	public String getDb2MetadataColumn() {
+		return db2MetadataColumn;
+	}
+
+	/**
+	 * @param db2MetadataColumn the db2MetadataColumn to set
+	 */
+	public void setDb2MetadataColumn(String db2MetadataColumn) {
+		this.db2MetadataColumn = db2MetadataColumn;
+	}
+
+	/**
+	 * @return the ooCobolMetadataColumn
+	 */
+	public String getOoCobolMetadataColumn() {
+		return ooCobolMetadataColumn;
+	}
+
+	/**
+	 * @param ooCobolMetadataColumn the ooCobolMetadataColumn to set
+	 */
+	public void setOoCobolMetadataColumn(String ooCobolMetadataColumn) {
+		this.ooCobolMetadataColumn = ooCobolMetadataColumn;
+	}
+
+	/**
+	 * @return the apfAuthMetadataColumn
+	 */
+	public String getApfAuthMetadataColumn() {
+		return apfAuthMetadataColumn;
+	}
+
+	/**
+	 * @param apfAuthMetadataColumn the apfAuthMetadataColumn to set
+	 */
+	public void setApfAuthMetadataColumn(String apfAuthMetadataColumn) {
+		this.apfAuthMetadataColumn = apfAuthMetadataColumn;
+	}
+
+	/**
+	 * @return the groupIdMetadataColumn
+	 */
+	public String getGroupIdMetadataColumn() {
+		return groupIdMetadataColumn;
+	}
+
+	/**
+	 * @param groupIdMetadataColumn the groupIdMetadataColumn to set
+	 */
+	public void setGroupIdMetadataColumn(String groupIdMetadataColumn) {
+		this.groupIdMetadataColumn = groupIdMetadataColumn;
+	}
+
+	/**
+	 * @return the teamIdMetadataColumn
+	 */
+	public String getTeamIdMetadataColumn() {
+		return teamIdMetadataColumn;
+	}
+
+	/**
+	 * @param teamIdMetadataColumn the teamIdMetadataColumn to set
+	 */
+	public void setTeamIdMetadataColumn(String teamIdMetadataColumn) {
+		this.teamIdMetadataColumn = teamIdMetadataColumn;
 	}
 
 	/**

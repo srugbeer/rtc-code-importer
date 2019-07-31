@@ -34,6 +34,10 @@ public class RTCCodeImporterConstants {
     public static final String RTC_MAINTENANCE_ITERATION = "rtc.maintenance.iteration";
     public static final String RTC_TEAM_ID_CATEGORY = "rtc.team.id.category";
     
+    //RTC Work Item Workflow Properties
+    public static final String RTC_WORKFLOW_PROJECT_IN_P = "za.co.absa.workitem.projectWorkflow.state.s10";
+    public static final String RTC_WORKFLOW_CSI_IN_P = "za.co.absa.workitem.changeSetItemWorkflow.state.s8";
+    
     //RTC Enterprise Extensions Language Definition Properties
     public static final String RTCZ_LANGDEFS_COBOL_UUID_PROP = "rtcz.langdefs.COBOL.uuid";
     public static final String RTCZ_LANGDEFS_OOCOBOL_UUID_PROP = "rtcz.langdefs.OOCOBOL.uuid";
@@ -61,6 +65,17 @@ public class RTCCodeImporterConstants {
     public static final String RTCZ_ZFOLDER_ASM_PROP = "rtcz.zfolder.asm";
     public static final String RTCZ_ZFOLDER_JCL_PROP = "rtcz.zfolder.jcl";
     public static final String RTCZ_ZFOLDER_PRM_PROP = "rtcz.zfolder.prm";
+       
+    /* Metadata Column Heading Properties */
+    public static final String METADATA_HEADER_MEMBER_TYPE_PROP = "metadata.header.membertype";
+    public static final String METADATA_HEADER_COMPILE_TYPE_PROP = "metadata.header.compiletype";
+    public static final String METADATA_HEADER_COMPILE_LANGUAGE_PROP = "metadata.header.compilelanguage";
+    public static final String METADATA_HEADER_IMS_PROP = "metadata.header.ims";
+    public static final String METADATA_HEADER_DB2_PROP = "metadata.header.db2";
+    public static final String METADATA_HEADER_OOCOBOL_PROP = "metadata.header.oocobol";
+    public static final String METADATA_HEADER_APF_AUTH_PROP = "metadata.header.apfauth";
+    public static final String METADATA_HEADER_GROUP_ID_PROP = "metadata.header.groupid";
+    public static final String METADATA_HEADER_TEAM_ID_PROP = "metadata.header.teamid";
     
     //Source Folder Property
     public static final String SOURCE_FOLDER_PROP = "source.folder";

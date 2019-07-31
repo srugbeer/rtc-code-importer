@@ -90,16 +90,28 @@ public class CsvFileReader {
             	String swrCode = "";
             	String teamId = "";
             	
-                values = line.split(seperator);                
+                values = line.split(seperator, -1);                
                 for (int i = 0; i < headers.length; i++) {                	
                 	//versionMap.put(headers[i], values[i]);
                 	switch (headers[i]) {
-                		case "Version" : versionIndex = values[i];
-                		case "CreationDate" : creationDate = values[i];
-                		case "CreatedBy" : createdBy = values[i];
-                		case "Project" : project = values[i];
-                		case "SWRCode" : swrCode = values[i];
-                		case "TeamId" : teamId = values[i];
+                		case "Version" : 
+                			versionIndex = values[i];
+                			break;
+                		case "CreationDate" : 
+                			creationDate = values[i];
+                			break;
+                		case "CreatedBy" : 
+                			createdBy = values[i];
+                			break;
+                		case "Project" : 
+                			project = values[i];
+                			break;
+                		case "SoftwareRelease" : 
+                			swrCode = values[i];
+                			break;
+                		case "TeamId" : 
+                			teamId = values[i];
+                			break;
                 	}                	
                 }
         		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmss");

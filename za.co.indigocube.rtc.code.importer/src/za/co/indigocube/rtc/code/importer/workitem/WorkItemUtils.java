@@ -28,7 +28,10 @@ import com.ibm.team.workitem.common.model.ICategory;
 import com.ibm.team.workitem.common.model.ICategoryHandle;
 import com.ibm.team.workitem.common.model.IComment;
 import com.ibm.team.workitem.common.model.IComments;
+import com.ibm.team.workitem.common.model.IState;
 import com.ibm.team.workitem.common.model.IWorkItem;
+import com.ibm.team.workitem.common.model.Identifier;
+import com.ibm.team.workitem.common.workflow.IWorkflowInfo;
 
 /**
  * @author Sudheer
@@ -102,11 +105,30 @@ public class WorkItemUtils {
 		return null;
 	}
 
+	private static Identifier<IState> findWorkflowState(WorkItemWorkingCopy workingCopy, String workflowStateId, 
+			IProgressMonitor monitor) throws TeamRepositoryException {
+		
+		Identifier<IState> state = null;
+		
+		IWorkItemClient workItemClient = getWorkItemClient(workingCopy.getTeamRepository());
+		IWorkItem workItem = workingCopy.getWorkItem();
+		IWorkflowInfo workflowInfo = workItemClient.findWorkflowInfo(workItem, monitor);
+		Identifier<IState>[] workflowStates = workflowInfo.getAllStateIds();
+		for (Identifier<IState> workflowState : workflowStates) {
+			if (workflowState.getStringIdentifier().equals(workflowStateId)) {
+				state = workflowState;
+				break;
+			}
+		}
+		
+		return state;
+	}
 	
 	static class WorkItemInitialization extends WorkItemOperation {
 		
 		private String fSummary;
 		private String fDescription;
+		private String fStateId;
 		private ICategoryHandle fCategory;
 		private Timestamp fCreationDate;
 		private IContributorHandle fCreator;
@@ -114,12 +136,13 @@ public class WorkItemUtils {
 		private IIterationHandle fIteration;
 		private String fComment;
 		
-		public WorkItemInitialization(String summary, String description, ICategoryHandle category, 
+		public WorkItemInitialization(String summary, String description, String stateId, ICategoryHandle category, 
 				Timestamp creationDate, IContributorHandle creator, IContributorHandle owner, 
 				IIterationHandle iteration, String comment) {
 			super("Initializing Work Item");
 			fSummary= summary;
 			fDescription = description;
+			fStateId = stateId;
 			fCategory= category;
 			fCreationDate = creationDate;
 			fCreator = creator;
@@ -128,19 +151,25 @@ public class WorkItemUtils {
 			fComment = comment;
 		}
 		
-		public WorkItemInitialization(String summary, ICategoryHandle category, 
+		public WorkItemInitialization(String summary, String state, ICategoryHandle category, 
 				Timestamp creationDate, IContributorHandle creator,
 				IContributorHandle owner, IIterationHandle iteration) {
-			this(summary, summary, category, creationDate, creator, owner, iteration, null);
+			this(summary, summary, state, category, creationDate, creator, owner, iteration, null);
 			
 		}
 		
+		@SuppressWarnings("deprecation")
 		@Override
 		protected void execute(WorkItemWorkingCopy workingCopy, IProgressMonitor monitor) 
 				throws TeamRepositoryException {
 			IWorkItem workItem = workingCopy.getWorkItem();
 			workItem.setHTMLSummary(XMLString.createFromPlainText(fSummary));
 			workItem.setHTMLDescription(XMLString.createFromPlainText(fDescription));
+			
+			if (fStateId != null) {
+				Identifier<IState> state = findWorkflowState(workingCopy, fStateId, monitor);
+				workItem.setState2(state);
+			}
 			workItem.setCategory(fCategory);
 			workItem.setCreationDate(fCreationDate);
 			workItem.setCreator(fCreator);
@@ -171,6 +200,24 @@ public class WorkItemUtils {
 	    public void setfWorkFlowAtion(String fWorkFlowAction) {
 	        this.fWorkFlowAction = fWorkFlowAction;
 	    }		
+	}
+	
+	static class WorkItemSetWorkflowState extends WorkItemOperation {
+	    private String fWorkFlowStateId;
+
+	    public WorkItemSetWorkflowState(String workflowSatateId) {
+	        super("Changing Work Item State", IWorkItem.FULL_PROFILE);
+	        fWorkFlowStateId = workflowSatateId;
+	    }
+
+	    @SuppressWarnings("deprecation")
+		@Override
+	    protected void execute(WorkItemWorkingCopy workingCopy,
+	            IProgressMonitor monitor) throws TeamRepositoryException {
+	    	IWorkItem workItem = workingCopy.getWorkItem();
+	    	Identifier<IState> workflowState = findWorkflowState(workingCopy, fWorkFlowStateId, monitor);
+	        workItem.setState2(workflowState);;
+	    }	
 	}
 
 }
